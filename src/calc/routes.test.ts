@@ -122,7 +122,7 @@ describe('legs and shortfall', () => {
   it('describes each leg with its source', () => {
     const r = calcRoutes('TWD>VND', 30_000, md).find((x) => x.id === 'usdt');
     expect(r?.legs.map((l) => l.source)).toEqual(['bitopro', 'binance']);
-    expect(r?.legs[1]?.text).toContain('26162');
+    expect(r?.legs[1]?.text).toContain('26,162');
     expect(r?.legs[1]?.text).toContain('0.1%');
   });
 

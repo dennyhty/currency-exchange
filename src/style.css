@@ -343,7 +343,9 @@ summary {
 }
 
 button.range {
-  padding: 4px 10px;
+  min-width: 44px;
+  min-height: 40px;
+  padding: 6px 12px;
   font-size: 0.85rem;
   background: transparent;
 }

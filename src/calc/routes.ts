@@ -32,7 +32,8 @@ export interface RouteResult {
 
 type Num = number | null | undefined;
 
-const fmt = (n: number): string => String(Number(n.toPrecision(8)));
+const fmt = (n: number): string =>
+  Number(n.toPrecision(8)).toLocaleString('en-US', { maximumFractionDigits: 8 });
 const pct = (f: number): string => `${fmt(f * 100)}%`;
 
 /** Build a route from steps; a step with a missing rate makes the whole route unavailable. */
