@@ -1,10 +1,15 @@
 import './style.css';
-import { DIRECTIONS, calcRoutes, shortfall, type RouteResult } from './calc/routes.ts';
+import {
+  DEFAULT_SETTINGS,
+  DIRECTIONS,
+  calcRoutes,
+  shortfall,
+  type RouteResult,
+} from './calc/routes.ts';
 import { loadSnapshot } from './data.ts';
 import { fetchHistory, historySeries, taipeiDate, type HistoryFile } from './lib/history.ts';
-import { formatAge, formatTaipeiTime, fromTaipeiInput, toTaipeiInput } from './lib/format.ts';
+import { formatAge, formatTaipeiTime } from './lib/format.ts';
 import { freshness } from './lib/freshness.ts';
-import { clearGola, loadGola, loadSettings, saveGola, saveSettings } from './lib/storage.ts';
 import type {
   BinanceRates,
   BitoproRates,
@@ -17,7 +22,7 @@ import type {
 } from './lib/types.ts';
 import { fetchBinanceQuotes } from './sources/binance.ts';
 import { fetchBitopro } from './sources/bitopro.ts';
-import { fetchGolaFile, newerGola, parseGolaJson, validateGola } from './sources/golavisa.ts';
+import { fetchGolaFile } from './sources/golavisa.ts';
 import { lineChart } from './ui/chart.ts';
 import { el } from './ui/dom.ts';
 
@@ -28,7 +33,6 @@ interface State {
   direction: Direction;
   amount: number;
   settings: Settings;
-  gola: GolaRates | undefined;
   remoteGola: GolaRates | null;
   liveBitopro: BitoproRates | undefined;
   liveBinance: BinanceRates | undefined;
@@ -44,8 +48,7 @@ interface State {
 const state: State = {
   direction: 'TWD>VND',
   amount: DIRECTIONS['TWD>VND'].defaultAmount,
-  settings: loadSettings(),
-  gola: loadGola(),
+  settings: DEFAULT_SETTINGS,
   remoteGola: null,
   liveBitopro: undefined,
   liveBinance: undefined,
@@ -64,7 +67,7 @@ function marketData(): MarketData {
     bitopro: state.liveBitopro,
     binance: state.liveBinance,
     esun: s?.esun,
-    gola: newerGola(state.gola, state.remoteGola),
+    gola: state.remoteGola ?? undefined,
   };
 }
 
@@ -170,8 +173,8 @@ function renderStatus(container: HTMLElement): void {
     [
       'gola',
       md.gola
-        ? `${md.gola.origin === 'remote' ? '自動' : '手動'}・TWD ${md.gola.twdToVnd}／${md.gola.vndToTwd}；USD ${nf(md.gola.usdToVnd, 0)}／${nf(md.gola.vndToUsd, 0)} VND`
-        : '請在下方手動輸入',
+        ? `TWD ${md.gola.twdToVnd}／${md.gola.vndToTwd}；USD ${nf(md.gola.usdToVnd, 0)}／${nf(md.gola.vndToUsd, 0)} VND`
+        : '尚無資料（需執行 /update-golavisa）',
     ],
   ];
   const list = el('ul', { className: 'status' });
@@ -191,139 +194,6 @@ function renderStatus(container: HTMLElement): void {
       ? [el('p', { className: 'warn', text: `抓取失敗（改用快照或無資料）— ${errs.join('；')}` })]
       : []),
   );
-}
-
-// ---------- GolaVisa manual input ----------
-
-function golaForm(onChange: () => void): HTMLElement {
-  const field = (label: string, value: number | undefined): [HTMLElement, HTMLInputElement] => {
-    const input = el('input', {
-      attrs: {
-        type: 'number',
-        inputmode: 'decimal',
-        step: 'any',
-        min: '0',
-        placeholder: '1 外幣 = ? VND',
-      },
-    });
-    if (value !== undefined) input.value = String(value);
-    return [el('label', {}, [el('span', { text: label }), input]), input];
-  };
-  const g = state.gola;
-  const [l1, twdIn] = field('TWD → VND（1 TWD 換到）', g?.twdToVnd);
-  const [l2, twdOut] = field('VND → TWD（1 TWD 要付）', g?.vndToTwd);
-  const [l3, usdIn] = field('USD → VND（1 USD 換到）', g?.usdToVnd);
-  const [l4, usdOut] = field('VND → USD（1 USD 要付）', g?.vndToUsd);
-  const time = el('input', { attrs: { type: 'datetime-local' } });
-  if (g?.updatedAt) time.value = toTaipeiInput(g.updatedAt);
-  const message = el('p', { className: 'muted' });
-  const paste = el('textarea', {
-    attrs: {
-      rows: '3',
-      placeholder: '把 https://www.golavisa.co/api/exchange-rates 的內容整個貼在這裡',
-    },
-  });
-
-  const fill = (v: GolaRates): void => {
-    twdIn.value = String(v.twdToVnd);
-    twdOut.value = String(v.vndToTwd);
-    usdIn.value = String(v.usdToVnd);
-    usdOut.value = String(v.vndToUsd);
-    time.value = v.updatedAt ? toTaipeiInput(v.updatedAt) : '';
-  };
-  const save = el('button', { text: '儲存', attrs: { type: 'button' } });
-  save.addEventListener('click', () => {
-    try {
-      const v = validateGola({
-        twdToVnd: Number(twdIn.value),
-        vndToTwd: Number(twdOut.value),
-        usdToVnd: Number(usdIn.value),
-        vndToUsd: Number(usdOut.value),
-        updatedAt: fromTaipeiInput(time.value),
-        enteredAt: Date.now(),
-      });
-      saveGola(v);
-      state.gola = v;
-      message.textContent = v.updatedAt
-        ? '已儲存。'
-        : '已儲存。（沒填更新時間，會用現在的時間當作輸入時間）';
-      onChange();
-    } catch (e) {
-      message.textContent = `沒有儲存：${e instanceof Error ? e.message : String(e)}`;
-    }
-  });
-  const clear = el('button', { text: '清除', className: 'secondary', attrs: { type: 'button' } });
-  clear.addEventListener('click', () => {
-    clearGola();
-    state.gola = undefined;
-    for (const i of [twdIn, twdOut, usdIn, usdOut, time]) i.value = '';
-    message.textContent = '已清除。';
-    onChange();
-  });
-  const parse = el('button', {
-    text: '解析並填入',
-    className: 'secondary',
-    attrs: { type: 'button' },
-  });
-  parse.addEventListener('click', () => {
-    try {
-      fill(parseGolaJson(paste.value));
-      message.textContent = '已填入，請確認後按「儲存」。';
-    } catch (e) {
-      message.textContent = `無法解析：${e instanceof Error ? e.message : String(e)}`;
-    }
-  });
-
-  return el('details', { className: 'card' }, [
-    el('summary', { text: 'GolaVisa 匯率（手動輸入）' }),
-    el('p', {
-      className: 'muted',
-      text: 'GolaVisa 網站不允許自動抓取。請在自己的瀏覽器打開網站取得數字，資料只存在這台裝置的瀏覽器。數字單位都是「1 外幣 = N VND」。',
-    }),
-    el('div', { className: 'grid' }, [l1, l2, l3, l4]),
-    el('label', {}, [el('span', { text: '網站標示的更新時間（台北時間）' }), time]),
-    el('div', { className: 'row' }, [save, clear]),
-    el('details', {}, [
-      el('summary', { text: '用貼上 JSON 自動填欄位' }),
-      paste,
-      el('div', { className: 'row' }, [parse]),
-    ]),
-    message,
-  ]);
-}
-
-// ---------- settings ----------
-
-function settingsForm(onChange: () => void): HTMLElement {
-  const mode = el('select', {}, [
-    el('option', { text: '掛單簿（最佳賣價／買價）', attrs: { value: 'orderbook' } }),
-    el('option', { text: '一鍵買賣（OTC 報價）', attrs: { value: 'otc' } }),
-  ]);
-  mode.value = state.settings.bitoproMode;
-  const fee = el('input', {
-    attrs: { type: 'number', inputmode: 'decimal', step: '0.01', min: '0', max: '5' },
-  });
-  fee.value = String(state.settings.bitoproFee * 100);
-  const apply = (): void => {
-    const f = Number(fee.value) / 100;
-    state.settings = {
-      bitoproMode: mode.value === 'otc' ? 'otc' : 'orderbook',
-      bitoproFee: Number.isFinite(f) && f >= 0 && f <= 0.05 ? f : 0,
-    };
-    saveSettings(state.settings);
-    onChange();
-  };
-  mode.addEventListener('change', apply);
-  fee.addEventListener('input', apply);
-  return el('details', { className: 'card' }, [
-    el('summary', { text: '設定' }),
-    el('label', {}, [el('span', { text: 'BitoPro 使用的價格' }), mode]),
-    el('label', {}, [el('span', { text: 'BitoPro 手續費（%，預設 0）' }), fee]),
-    el('p', {
-      className: 'muted',
-      text: 'BitoPro 掛單吃單預設等級：maker 0.1%／taker 0.2%（用 BITO 抵扣 0.08%／0.16%）。Binance 手續費固定為 VND 0.1%、CNY 0（2026-10-08 查證）。',
-    }),
-  ]);
 }
 
 // ---------- trend ----------
@@ -385,7 +255,7 @@ function renderTrend(container: HTMLElement): void {
       parts.push(
         el('p', {
           className: 'muted',
-          text: '經 USD 與直換需要 GolaVisa 的自動更新檔（/update-golavisa）；排程讀不到瀏覽器裡手動輸入的數字。',
+          text: '經 USD 與直換需要 GolaVisa 的更新檔（在你的電腦執行 /update-golavisa 發佈）。',
         }),
       );
     }
@@ -536,8 +406,6 @@ function build(root: HTMLElement): void {
         el('div', { className: 'row between' }, [el('h2', { text: '資料來源' }), refreshBtn]),
         status,
       ]),
-      golaForm(rerender),
-      settingsForm(rerender),
       el('footer', {}, [
         el('p', {
           text: 'Binance 的價格是「預估價」（買價可能低於賣價），實際成交可能較差，請以下單頁面為準。結果不含銀行匯款費、USDT 提領網路費與滑價，僅供參考。',
