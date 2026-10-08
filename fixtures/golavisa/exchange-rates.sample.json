@@ -1,0 +1,30 @@
+{
+  "snapshot": {
+    "rates": {
+      "USD": {
+        "sell": 26110,
+        "buy_cash": 25960,
+        "buy_transfer": 25960
+      },
+      "TWD": {
+        "sell": 810,
+        "buy_cash": 781,
+        "buy_transfer": 781
+      }
+    },
+    "bank_rates": {
+      "USD": {
+        "sell": 26170,
+        "buy_cash": 25760,
+        "buy_transfer": 25790
+      }
+    },
+    "source": "vietcombank",
+    "source_url": "https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx",
+    "note": null,
+    "updated_at": "2026-10-08T03:40:56.810248+00:00",
+    "hung_long_updated_at": "2026-10-08T03:06:08.810039+00:00",
+    "bank_updated_at": "2026-10-08T03:40:56.810248+00:00",
+    "updated_by_name": "cron_vietcombank"
+  }
+}

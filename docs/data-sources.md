@@ -11,7 +11,7 @@
 | Binance Express 價格 | `agent/quote-price`（GET） | ✅ 不需瀏覽器 | ✅ `*` | 瀏覽器即時抓 |
 | Binance Express 費率 | `commission-rate/taker`（POST） | ✅ | ❌ 無 CORS 標頭 | 排程快照（很少變動） |
 | 玉山 即期匯率 | `LastRateInfo`（POST，空 body） | ✅ | ❌ 無 CORS 標頭 | 排程快照 |
-| GolaVisa | 只有網頁 | ❌ Vercel 檢查站（HTTP 429） | — | 需要使用者協助（見下） |
+| GolaVisa | `GET /api/exchange-rates`（JSON） | ❌ Vercel 檢查站（HTTP 429） | 未測 | 使用者貼上 JSON（見 §4） |
 
 ## 1. BitoPro（USDT/TWD）
 
@@ -56,10 +56,25 @@
 
 ## 4. GolaVisa
 
-- 兩次從 runner 抓都是 HTTP 429「Vercel Security Checkpoint」；runner 上的無頭 Chrome 也無法通過驗證（code 21）。
-- 這是網站擁有者設的機器人防護，**不做繞過**。
-- 選項：(1) 使用者在自己的瀏覽器開頁面，把文字貼到面板解析（頁面內容與格式未知，需要使用者貼一份樣本）；(2) 手動輸入數字與網站上的更新時間；(3) 詢問 GolaVisa 是否有公開資料來源。
-- 儲存位置待定：只存在該裝置的瀏覽器，或存在 repo 的資料檔（跨裝置共用，但要在 GitHub 上編輯）。
+- 頁面背後是 `GET https://www.golavisa.co/api/exchange-rates`（Next.js 內部 API，由使用者在自己的瀏覽器查到；`Cache-Control: no-store`）。
+- 從 GitHub runner 呼叫（plain curl、帶瀏覽器 UA）也是 HTTP 429、`x-vercel-mitigated: challenge`，頁面與 API 都被 Vercel 檢查站擋住。**不做繞過。**
+- 在使用者自己的瀏覽器直接開這個網址是正常的，回傳 JSON，所以面板採用「使用者貼上 JSON」：打開該網址 → 全選複製 → 貼到面板 → 面板解析並存起來。
+- 回應結構（範例見 `fixtures/golavisa/exchange-rates.sample.json`）：
+  - `snapshot.rates`：Hung Long 換匯店，`USD`、`TWD`，每個有 `sell`、`buy_cash`、`buy_transfer`，單位都是「1 外幣 = N VND」。
+  - `snapshot.bank_rates`：Vietcombank 牌價（USD、CNY 等，沒有 TWD）。
+  - 時間：`hung_long_updated_at`、`bank_updated_at`、`updated_at`（UTC ISO）。Hung Long 約每個工作日更新一次。
+- 欄位對應（你拿東西給店家＝店家「買入」）：
+
+  | 路徑中的一步 | 用的欄位 |
+  |---|---|
+  | TWD → VND | `rates.TWD.buy_cash`（或 `buy_transfer`） |
+  | VND → TWD | `rates.TWD.sell`（1 TWD 要多少 VND） |
+  | USD → VND | `rates.USD.buy_cash`（或 `buy_transfer`） |
+  | VND → USD | `rates.USD.sell`（1 USD 要多少 VND） |
+
+  探測當天數字：TWD 買 781／賣 810；USD 買 25,960／賣 26,110。與頁面計算機規則一致（TWD、USD 用 Hung Long）。
+- 這是 Gola 前端的內部 API，欄位可能變動；解析要防欄位缺漏，缺了就顯示「資料不足」。
+- 待確認：貼上的資料要存在該裝置的瀏覽器，還是存在 repo 資料檔（跨裝置共用）。
 
 ## 5. 對架構的影響
 
