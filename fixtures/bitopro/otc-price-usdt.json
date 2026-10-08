@@ -1,0 +1,15 @@
+{
+  "currency": "usdt",
+  "buySwapQuotation": {
+    "twd": {
+      "pricingCurrency": "twd",
+      "exchangeRate": "32.118964"
+    }
+  },
+  "sellSwapQuotation": {
+    "twd": {
+      "pricingCurrency": "twd",
+      "exchangeRate": "31.849092"
+    }
+  }
+}
