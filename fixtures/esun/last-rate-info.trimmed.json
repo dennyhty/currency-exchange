@@ -1,0 +1,43 @@
+{
+  "DiscontFlag": "T",
+  "Rates": [
+    {
+      "Name": "人民幣",
+      "BBoardRate": 4.736,
+      "SBoardRate": 4.786,
+      "CashBBoardRate": "4.69",
+      "CashSBoardRate": "4.85",
+      "BuyIncreaseRate": "4.751",
+      "SellDecreaseRate": "4.771",
+      "UpdateTime": "/Date(1791448520000)/",
+      "CCY": "CNY/TWD",
+      "Key": "人民幣",
+      "Url": null,
+      "Title": null,
+      "Serial": 0,
+      "Alt": null,
+      "Bonus": "0.015",
+      "CashBonus": null,
+      "Description": null
+    },
+    {
+      "Name": "美元",
+      "BBoardRate": 31.85,
+      "SBoardRate": 31.95,
+      "CashBBoardRate": "31.6",
+      "CashSBoardRate": "32.15",
+      "BuyIncreaseRate": "31.881",
+      "SellDecreaseRate": "31.919",
+      "UpdateTime": "/Date(1791448520000)/",
+      "CCY": "USD/TWD",
+      "Key": "美元",
+      "Url": null,
+      "Title": null,
+      "Serial": 0,
+      "Alt": null,
+      "Bonus": "0.031",
+      "CashBonus": null,
+      "Description": null
+    }
+  ]
+}

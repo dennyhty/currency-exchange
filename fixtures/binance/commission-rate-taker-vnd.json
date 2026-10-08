@@ -1,0 +1,26 @@
+{
+  "code": "000000",
+  "message": null,
+  "messageDetail": null,
+  "data": [
+    {
+      "tradeMethodIdentifier": null,
+      "tradeType": "BUY",
+      "baseCommissionRate": "0.00100000",
+      "commissionRate": "0.00100000",
+      "minFee": null,
+      "feeRange": null,
+      "minFiatAmountForTakerFee": null
+    },
+    {
+      "tradeMethodIdentifier": null,
+      "tradeType": "SELL",
+      "baseCommissionRate": "0.00100000",
+      "commissionRate": "0.00100000",
+      "minFee": null,
+      "feeRange": null,
+      "minFiatAmountForTakerFee": null
+    }
+  ],
+  "success": true
+}

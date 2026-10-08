@@ -1,0 +1,15 @@
+{
+  "code": "000000",
+  "message": null,
+  "messageDetail": null,
+  "data": {
+    "asset": "USDT",
+    "assetScale": 2,
+    "fiat": "VND",
+    "fiatSymbol": "₫",
+    "fiatScale": 0,
+    "price": 26162,
+    "priceScale": 0
+  },
+  "success": true
+}

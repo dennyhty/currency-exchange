@@ -1,0 +1,15 @@
+{
+  "code": "000000",
+  "message": null,
+  "messageDetail": null,
+  "data": {
+    "asset": "USDT",
+    "assetScale": 2,
+    "fiat": "CNY",
+    "fiatSymbol": "￥",
+    "fiatScale": 2,
+    "price": 6.67,
+    "priceScale": 2
+  },
+  "success": true
+}

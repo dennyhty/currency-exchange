@@ -26,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        group: [round2]
+        group: [golavisa]
     steps:
       - uses: actions/checkout@v4
 
