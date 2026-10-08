@@ -69,6 +69,7 @@
 
 每次 1–3 行；太長時把舊紀錄移到 `docs/` 下歸檔。
 
+- **2026-10-08**　在使用者 Mac 實測 `/update-golavisa` 成功：Claude in Chrome 讀 API → `publish-golavisa.ts` 建立 `data` 分支並推送 `golavisa.json`（raw URL 約 1 分鐘後可讀）。本機已裝 Homebrew、Node 22、gh 並登入；腳本在暫存 clone 內 commit，不吃 repo 的 git 設定，需全域 `user.name`／`user.email` 或 `GIT_AUTHOR_*`／`GIT_COMMITTER_*` 環境變數。
 - **2026-10-08**　Phase 4 歷史走勢：排程（台北 09:00）的 `history` job 抓玉山、BitoPro、Binance，連同 72 小時內的 `golavisa.json`，寫進 `data` 分支 `history.json`（每天一筆）；網站依目前設定重算各路徑每單位匯率畫折線圖（30／90 天／全部、表格檢視）。使用者決定**先不做通知**：排程讀不到手動輸入的 GolaVisa，最佳路徑改變的通知目前不會觸發。
 - **2026-10-08**　Dependabot：合併 PR #2（checkout 6→7）；關閉 #3（`@types/node` 22→26），並在 `dependabot.yml` 忽略 `@types/node` 主版本升級（跟 `.nvmrc` 的 Node 版本一起升）。
 - **2026-10-08**　查 GolaVisa 上游：`bank_rates` 由排程抓 Vietcombank XML（API 自帶 `source_url`）；TWD／USD 用的雄龍匯率是 Gola 電話確認後手動輸入，查無公開來源。使用者決定**不使用** Vietcombank 數據，GolaVisa 維持手動輸入。
