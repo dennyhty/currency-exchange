@@ -133,7 +133,9 @@ Phase 0 要與來源頁面對帳的點：
 
 ### Phase 4｜選配
 
-- 歷史走勢（資料存 `data` 分支）、價差達門檻通知、PWA（加到主畫面）。
+- ✅ 歷史走勢：`deploy.yml` 的 `history` job 每天台北 09:00 把各來源原始匯率寫進 `data` 分支 `history.json`（`scripts/record-history.ts`、`src/lib/history.ts`）；網站用目前設定重算每條路徑「每 1 單位外幣」的匯率畫折線圖。GolaVisa 只在 `golavisa.json` 72 小時內才記錄，所以經 USD／直換通常是空的。
+- 通知（使用者選「最佳路徑改變」，2026-10-08 決定先不做）：要等 GolaVisa 能自動更新才有意義。
+- PWA（加到主畫面）。
 - 納入 BitoPro 深度滑價。
 - 把 TWD 與 CNY 路徑換成同一基準（相對中間價的成本 %），方便跨幣別比較。
 

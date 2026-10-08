@@ -1,6 +1,7 @@
 import './style.css';
 import { DIRECTIONS, calcRoutes, shortfall, type RouteResult } from './calc/routes.ts';
 import { loadSnapshot } from './data.ts';
+import { fetchHistory, historySeries, taipeiDate, type HistoryFile } from './lib/history.ts';
 import { formatAge, formatTaipeiTime, fromTaipeiInput, toTaipeiInput } from './lib/format.ts';
 import { freshness } from './lib/freshness.ts';
 import { clearGola, loadGola, loadSettings, saveGola, saveSettings } from './lib/storage.ts';
@@ -17,6 +18,7 @@ import type {
 import { fetchBinanceQuotes } from './sources/binance.ts';
 import { fetchBitopro } from './sources/bitopro.ts';
 import { fetchGolaFile, newerGola, parseGolaJson, validateGola } from './sources/golavisa.ts';
+import { lineChart } from './ui/chart.ts';
 import { el } from './ui/dom.ts';
 
 const REPO_URL = 'https://github.com/dennyhty/currency-exchange';
@@ -31,7 +33,10 @@ interface State {
   liveBitopro: BitoproRates | undefined;
   liveBinance: BinanceRates | undefined;
   snapshot: Snapshot | null;
-  errors: Partial<Record<'bitopro' | 'binance' | 'snapshot' | 'gola', string>>;
+  history: HistoryFile | null;
+  /** Days shown in the trend chart; 0 = everything recorded. */
+  trendDays: number;
+  errors: Partial<Record<'bitopro' | 'binance' | 'snapshot' | 'gola' | 'history', string>>;
   loading: boolean;
   now: number;
 }
@@ -45,6 +50,8 @@ const state: State = {
   liveBitopro: undefined,
   liveBinance: undefined,
   snapshot: null,
+  history: null,
+  trendDays: 90,
   errors: {},
   loading: false,
   now: Date.now(),
@@ -319,16 +326,121 @@ function settingsForm(onChange: () => void): HTMLElement {
   ]);
 }
 
+// ---------- trend ----------
+
+const TREND_RANGES = [
+  { label: '30 天', days: 30 },
+  { label: '90 天', days: 90 },
+  { label: '全部', days: 0 },
+];
+
+const TREND_LABEL: Record<string, string> = {
+  usdt: '經 USDT',
+  usd: '經 USD',
+  direct: 'GolaVisa 直換',
+};
+
+/** Daily history from the `data` branch, recalculated with the current settings. */
+function renderTrend(container: HTMLElement): void {
+  const { from, to } = DIRECTIONS[state.direction];
+  const fromVnd = from === 'VND';
+  const unit = fromVnd ? to : from;
+  const entries = state.history?.entries ?? [];
+  const since = state.trendDays ? taipeiDate(state.now - state.trendDays * 86_400_000) : '';
+  const { series, points } = historySeries(
+    entries.filter((e) => e.date > since),
+    state.direction,
+    state.settings,
+  );
+  const parts: Node[] = [
+    el('p', {
+      className: 'muted',
+      text: fromVnd
+        ? `換 1 ${unit} 要付多少 VND（越低越好）・每天台北 09:00 記錄一筆`
+        : `1 ${unit} 換到多少 VND（越高越好）・每天台北 09:00 記錄一筆`,
+    }),
+  ];
+  if (state.errors.history) {
+    parts.push(el('p', { className: 'warn', text: `歷史資料讀取失敗：${state.errors.history}` }));
+  } else if (series.length === 0) {
+    parts.push(
+      el('p', {
+        className: 'muted',
+        text: entries.length
+          ? '這段期間沒有可用的資料。'
+          : '還沒有歷史資料，第一筆會在下一次排程（台北 09:00）記錄。',
+      }),
+    );
+  } else {
+    const digits = unit === 'TWD' ? 2 : 0;
+    parts.push(
+      lineChart({
+        series: series.map((s) => ({ id: s.id, label: TREND_LABEL[s.id] ?? s.title })),
+        points,
+        format: (n) => nf(n, digits),
+        label: `${state.direction} 各路徑每日匯率走勢，${points.length} 天`,
+      }),
+    );
+    if ((from === 'TWD' || to === 'TWD') && series.length === 1) {
+      parts.push(
+        el('p', {
+          className: 'muted',
+          text: '經 USD 與直換需要 GolaVisa 的自動更新檔（/update-golavisa）；排程讀不到瀏覽器裡手動輸入的數字。',
+        }),
+      );
+    }
+  }
+  container.replaceChildren(...parts);
+}
+
 // ---------- page ----------
 
 function build(root: HTMLElement): void {
   const results = el('div', { className: 'results' });
   const status = el('div');
+  const trend = el('div');
+  let trendKey = '';
   const rerender = (): void => {
     state.now = Date.now();
     renderResults(results);
     renderStatus(status);
+    // the chart only changes with its inputs, not with the 30-second live refresh
+    const h = state.history?.entries;
+    const key = JSON.stringify([
+      state.direction,
+      state.settings,
+      state.trendDays,
+      h?.length,
+      h?.[h.length - 1]?.at,
+      state.errors.history,
+      taipeiDate(state.now),
+    ]);
+    if (key !== trendKey) {
+      trendKey = key;
+      renderTrend(trend);
+    }
   };
+
+  const rangeBar = el('div', {
+    className: 'ranges',
+    attrs: { role: 'group', 'aria-label': '期間' },
+  });
+  const rangeButtons = TREND_RANGES.map(({ label, days }) => {
+    const b = el('button', { text: label, className: 'range', attrs: { type: 'button' } });
+    b.addEventListener('click', () => {
+      state.trendDays = days;
+      syncRanges();
+      rerender();
+    });
+    rangeBar.append(b);
+    return { b, days };
+  });
+  const syncRanges = (): void => {
+    for (const { b, days } of rangeButtons) {
+      b.setAttribute('aria-pressed', String(days === state.trendDays));
+    }
+  };
+  syncRanges();
 
   const dirButtons = new Map<Direction, HTMLButtonElement>();
   const amount = el('input', {
@@ -370,16 +482,19 @@ function build(root: HTMLElement): void {
     className: 'secondary',
     attrs: { type: 'button' },
   });
-  const refresh = async (): Promise<void> => {
+  let historyLoaded = false; // null (nothing recorded yet) counts as loaded
+  const refresh = async (manual = false): Promise<void> => {
     if (state.loading) return;
     state.loading = true;
     refreshBtn.disabled = true;
     refreshBtn.textContent = '更新中…';
-    const [b, x, s, rg] = await Promise.allSettled([
+    const [b, x, s, rg, h] = await Promise.allSettled([
       fetchBitopro(),
       fetchBinanceQuotes(),
       loadSnapshot(),
       fetchGolaFile(),
+      // the history changes once a day: fetch it on load and on the refresh button only
+      historyLoaded && !manual ? Promise.resolve(state.history) : fetchHistory(),
     ]);
     const msg = (r: PromiseRejectedResult): string =>
       r.reason instanceof Error ? r.reason.message : String(r.reason);
@@ -392,12 +507,16 @@ function build(root: HTMLElement): void {
     else state.errors.snapshot = msg(s);
     if (rg.status === 'fulfilled') state.remoteGola = rg.value;
     else state.errors.gola = msg(rg);
+    if (h.status === 'fulfilled') {
+      state.history = h.value;
+      historyLoaded = true;
+    } else state.errors.history = msg(h);
     state.loading = false;
     refreshBtn.disabled = false;
     refreshBtn.textContent = '重新整理';
     rerender();
   };
-  refreshBtn.addEventListener('click', () => void refresh());
+  refreshBtn.addEventListener('click', () => void refresh(true));
 
   const link = el('a', { text: 'GitHub', attrs: { href: REPO_URL, rel: 'noopener' } });
   root.replaceChildren(
@@ -409,6 +528,10 @@ function build(root: HTMLElement): void {
       dirBar,
       el('div', { className: 'amount' }, [amount, unit]),
       results,
+      el('section', { className: 'card trend' }, [
+        el('div', { className: 'row between' }, [el('h2', { text: '歷史走勢' }), rangeBar]),
+        trend,
+      ]),
       el('section', { className: 'card' }, [
         el('div', { className: 'row between' }, [el('h2', { text: '資料來源' }), refreshBtn]),
         status,

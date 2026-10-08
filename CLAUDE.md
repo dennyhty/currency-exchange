@@ -26,7 +26,7 @@
 ## 已知限制
 
 - Claude 雲端 session 的網路政策擋住四個來源網域（CONNECT 403），WebFetch 也一樣。要測外部來源：推一次性的 probe workflow（push 觸發），讀 GitHub Actions 日誌（`get_job_logs`；日誌大時會存成檔案，用 python 解碼）。Phase 0 就是這樣做的，結果在 `docs/data-sources.md`。
-- GolaVisa 有 Vercel 機器人檢查，不繞過。只有使用者電腦上的真人瀏覽器能讀；在那邊用 `/update-golavisa`（`.claude/commands/update-golavisa.md`）→ `scripts/publish-golavisa.ts` 推到 `data` 分支。`data` 分支沒有保護規則，只放 `golavisa.json`，不要合進 `main`。
+- GolaVisa 有 Vercel 機器人檢查，不繞過。只有使用者電腦上的真人瀏覽器能讀；在那邊用 `/update-golavisa`（`.claude/commands/update-golavisa.md`）→ `scripts/publish-golavisa.ts` 推到 `data` 分支。`data` 分支沒有保護規則，只放 `golavisa.json` 與 `history.json`（排程每天寫入的歷史匯率），不要合進 `main`。
 - Repo 設定（Pages Source、branch protection）Claude 無法操作，需使用者在 GitHub 網頁設定。
 
 ## 開發進度
@@ -37,7 +37,7 @@
 | 1 | 骨架、GitHub 管控、空殼上線 | ✅ 完成（Pages 已部署、`main` 保護已驗證，PR #1 已合併） |
 | 2 | 抓取層（排程抓玉山；瀏覽器即時抓 BitoPro／Binance） | ✅ 完成並上線（排程每天台北 09:00，只抓玉山） |
 | 3 | 計算引擎與畫面（含 GolaVisa 手動輸入） | ✅ 完成並上線（PR #4；使用者在手機確認網站正常） |
-| 4 | 選配（走勢、通知、PWA…） | ⏳ 未開始 |
+| 4 | 選配（走勢、通知、PWA…） | 🚧 進行中（歷史走勢已做；通知先不做） |
 
 狀態圖例：⏳ 未開始｜🚧 進行中｜✅ 完成｜⛔ 受阻
 
@@ -54,7 +54,8 @@
 
 1. 確認明天台北 09:00 的排程有跑、`rates.json` 有更新（schedule 不保證準時）。
 2. 玉山非營業時間／週末的 `UpdateTime` 行為待觀察。
-3. 視需要做 Phase 4（走勢、通知、PWA）。
+3. 歷史走勢合併後，手動跑一次 Deploy workflow（或等隔天 09:00）確認 `data` 分支出現 `history.json`、圖表有第一個點。
+4. Phase 4 其他項目（PWA、跨幣別成本 %、BitoPro 深度滑價）視需要再做。
 
 ### 待使用者決定
 
@@ -68,6 +69,7 @@
 
 每次 1–3 行；太長時把舊紀錄移到 `docs/` 下歸檔。
 
+- **2026-10-08**　Phase 4 歷史走勢：排程（台北 09:00）的 `history` job 抓玉山、BitoPro、Binance，連同 72 小時內的 `golavisa.json`，寫進 `data` 分支 `history.json`（每天一筆）；網站依目前設定重算各路徑每單位匯率畫折線圖（30／90 天／全部、表格檢視）。使用者決定**先不做通知**：排程讀不到手動輸入的 GolaVisa，最佳路徑改變的通知目前不會觸發。
 - **2026-10-08**　Dependabot：合併 PR #2（checkout 6→7）；關閉 #3（`@types/node` 22→26），並在 `dependabot.yml` 忽略 `@types/node` 主版本升級（跟 `.nvmrc` 的 Node 版本一起升）。
 - **2026-10-08**　查 GolaVisa 上游：`bank_rates` 由排程抓 Vietcombank XML（API 自帶 `source_url`）；TWD／USD 用的雄龍匯率是 Gola 電話確認後手動輸入，查無公開來源。使用者決定**不使用** Vietcombank 數據，GolaVisa 維持手動輸入。
 - **2026-10-08**　排程只抓玉山；Binance 手續費改為固定值（`DEFAULT_BINANCE_FEES`），移除費率抓取與 BitoPro／Binance 備援快照。

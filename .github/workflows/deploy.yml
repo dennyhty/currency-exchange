@@ -47,6 +47,49 @@ jobs:
         with:
           path: dist
 
+  # Once a day, append every source's rates to history.json on the `data` branch (the site's trend chart).
+  history:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: data-branch
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+
+      - name: Check out the data branch
+        run: |
+          if git fetch --depth 1 origin data; then
+            git worktree add -B data data-branch FETCH_HEAD
+          else
+            git worktree add --orphan -b data data-branch
+          fi
+
+      - name: Record today's rates
+        run: node scripts/record-history.ts --file data-branch/history.json --gola data-branch/golavisa.json
+
+      - name: Commit and push
+        working-directory: data-branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add history.json
+          git commit -m "data: rate history $(TZ=Asia/Taipei date +%F)"
+          # golavisa.json may have been published meanwhile: replay our commit on top and retry
+          for i in 1 2 3; do
+            git push origin data && exit 0
+            sleep $((i * 5))
+            git pull --rebase origin data
+          done
+          exit 1
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: build
