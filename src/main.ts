@@ -50,14 +50,13 @@ const state: State = {
   now: Date.now(),
 };
 
-/** Live browser data wins; the published snapshot is only a fallback. */
+/** BitoPro and Binance come live from the browser; E.SUN comes from the daily snapshot. */
 function marketData(): MarketData {
   const s = state.snapshot;
   return {
-    bitopro: state.liveBitopro ?? s?.bitopro,
-    binance: state.liveBinance ?? s?.binance,
+    bitopro: state.liveBitopro,
+    binance: state.liveBinance,
     esun: s?.esun,
-    binanceFees: s?.binanceFees,
     gola: newerGola(state.gola, state.remoteGola),
   };
 }
@@ -69,8 +68,6 @@ function stampOf(md: MarketData, id: SourceId): number | null {
       return md.bitopro?.fetchedAt ?? null;
     case 'binance':
       return md.binance?.fetchedAt ?? null;
-    case 'binanceFees':
-      return md.binanceFees?.fetchedAt ?? null;
     case 'esun':
       return md.esun ? (md.esun.sourceUpdatedAt ?? md.esun.fetchedAt) : null;
     case 'gola':
@@ -81,7 +78,6 @@ function stampOf(md: MarketData, id: SourceId): number | null {
 const SOURCE_NAME: Record<SourceId, string> = {
   bitopro: 'BitoPro',
   binance: 'Binance Express',
-  binanceFees: 'Binance 費率',
   esun: '玉山即期',
   gola: 'GolaVisa',
 };
@@ -96,15 +92,9 @@ function badge(md: MarketData, id: SourceId): HTMLElement {
   if (stamp === null) return el('span', { className: 'badge missing', text: '無資料' });
   const level = freshness(id, state.now - stamp);
   const label = formatAge(stamp, state.now);
-  const marker =
-    id === 'bitopro' || id === 'binance'
-      ? (id === 'bitopro' ? state.liveBitopro : state.liveBinance)
-        ? ''
-        : '・快照'
-      : '';
   return el('span', {
     className: `badge ${level}`,
-    text: `${label}${marker}`,
+    text: label,
     attrs: { title: `資料時間 ${formatTaipeiTime(stamp)}（台北）` },
   });
 }
@@ -324,7 +314,7 @@ function settingsForm(onChange: () => void): HTMLElement {
     el('label', {}, [el('span', { text: 'BitoPro 手續費（%，預設 0）' }), fee]),
     el('p', {
       className: 'muted',
-      text: 'BitoPro 掛單吃單預設等級：maker 0.1%／taker 0.2%（用 BITO 抵扣 0.08%／0.16%）。Binance 手續費由排程抓取（VND 0.1%、CNY 0）。',
+      text: 'BitoPro 掛單吃單預設等級：maker 0.1%／taker 0.2%（用 BITO 抵扣 0.08%／0.16%）。Binance 手續費固定為 VND 0.1%、CNY 0（2026-10-08 查證）。',
     }),
   ]);
 }

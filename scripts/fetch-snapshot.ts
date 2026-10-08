@@ -1,12 +1,10 @@
-// Scheduled job: fetch the sources a browser cannot read (E.SUN, Binance fees) plus fallback copies
-// of the live ones, and write rates.json. A failed source keeps its previous value, flagged stale.
+// Scheduled job (daily, 09:00 Taipei): fetch E.SUN's USD/TWD board rate, which a browser cannot read,
+// and write rates.json. If E.SUN fails, the previous value is kept and flagged stale.
 // usage: node scripts/fetch-snapshot.ts --out public/rates.json [--prev previous-rates.json]
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { parseArgs } from 'node:util';
 import { asSnapshot, mergeSnapshot, type FetchResult } from '../src/lib/snapshot.ts';
-import { fetchBinanceFees, fetchBinanceQuotes } from '../src/sources/binance.ts';
-import { fetchBitopro } from '../src/sources/bitopro.ts';
 import { fetchEsun } from '../src/sources/esun.ts';
 
 const { values } = parseArgs({ options: { out: { type: 'string' }, prev: { type: 'string' } } });
@@ -34,19 +32,9 @@ if (values.prev) {
   }
 }
 
-const [esun, binanceFees, bitopro, binance] = await Promise.all([
-  attempt('esun', () => fetchEsun()),
-  attempt('binanceFees', () => fetchBinanceFees()),
-  attempt('bitopro', () => fetchBitopro()),
-  attempt('binance', () => fetchBinanceQuotes()),
-]);
-const snapshot = mergeSnapshot(prev, { esun, binanceFees, bitopro, binance }, Date.now());
+const esun = await attempt('esun', () => fetchEsun());
+const snapshot = mergeSnapshot(prev, { esun }, Date.now());
 
 await mkdir(dirname(values.out), { recursive: true });
 await writeFile(values.out, `${JSON.stringify(snapshot, null, 2)}\n`);
-const summary = Object.entries({ esun, binanceFees, bitopro, binance })
-  .map(
-    ([k, r]) => `${k}=${r.ok ? 'ok' : snapshot[k as keyof typeof snapshot] ? 'stale' : 'missing'}`,
-  )
-  .join(' ');
-console.log(`wrote ${values.out}: ${summary}`);
+console.log(`wrote ${values.out}: esun=${esun.ok ? 'ok' : snapshot.esun ? 'stale' : 'missing'}`);
