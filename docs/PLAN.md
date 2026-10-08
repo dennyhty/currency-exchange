@@ -164,7 +164,7 @@ Phase 0 要與來源頁面對帳的點：
 | 2 | 即時性 | BitoPro／Binance 即時，玉山快照 | ✅ 已定案 |
 | 3 | 手動輸入的 GolaVisa 數字存放位置 | 存在瀏覽器（localStorage），各裝置各填一次 | ✅ 已定案（使用者自己開網址取數字）；輸入框附「貼上 JSON 自動填欄位」輔助 |
 | 4 | BitoPro 你是用掛單簿還是「一鍵買賣」？銀行匯款費、USDT 提領網路費要不要預設納入？ | 掛單簿；只計 Binance VND 0.1% | 待回覆 |
-| 5 | 試算金額預設值 | TWD 30,000／CNY 7,000／VND 10,000,000 | 待回覆 |
+| 5 | 試算金額預設值 | TWD 1,000／CNY 100／VND 10,000,000（使用者已改 TWD、CNY） | ✅ 已定案 |
 | 6 | 介面語言 | 繁體中文 | 預設 |
 | 7 | GitHub 網頁設定（Claude 無法代做）：Settings → Pages → Source 選 GitHub Actions；`main` 保護規則；合併 PR | — | 待使用者 |
 
