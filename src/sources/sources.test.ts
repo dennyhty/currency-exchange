@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fetchBinanceFees, fetchBinanceQuotes, parseCommission, parseQuote } from './binance.ts';
+import { fetchBinanceQuotes, parseQuote } from './binance.ts';
 import { fetchBitopro, parseOrderBook, parseOtc } from './bitopro.ts';
 import { fetchEsun, parseDotNetDate, parseEsun } from './esun.ts';
 import { fakeFetch, fixture } from './fixtures.ts';
@@ -100,17 +100,6 @@ describe('binance', () => {
     expect(() => parseQuote({ success: true, data: { price: 26 } }, 'VND')).toThrow(/outside/);
   });
 
-  it('reads taker fees as fractions', () => {
-    expect(parseCommission(fixture('binance/commission-rate-taker-vnd.json'))).toEqual({
-      buy: 0.001,
-      sell: 0.001,
-    });
-    expect(parseCommission(fixture('binance/commission-rate-taker-cny.json'))).toEqual({
-      buy: 0,
-      sell: 0,
-    });
-  });
-
   it('fetches all four quotes, using the right tradeType for each side', async () => {
     const seen: string[] = [];
     const f = (async (input: RequestInfo | URL) => {
@@ -123,16 +112,6 @@ describe('binance', () => {
     const r = await fetchBinanceQuotes(f, 7);
     expect(r).toMatchObject({ VND: { buy: 25986, sell: 26162 }, CNY: { buy: 6.65, sell: 6.67 } });
     expect(seen).toHaveLength(4);
-  });
-
-  it('fetches fees for both fiats', async () => {
-    const f = (async (_: RequestInfo | URL, init?: RequestInit) => {
-      const fiat = String(init?.body).includes('"VND"') ? 'vnd' : 'cny';
-      return new Response(JSON.stringify(fixture(`binance/commission-rate-taker-${fiat}.json`)));
-    }) as typeof fetch;
-    const r = await fetchBinanceFees(f, 7);
-    expect(r.VND.sell).toBe(0.001);
-    expect(r.CNY.sell).toBe(0);
   });
 });
 

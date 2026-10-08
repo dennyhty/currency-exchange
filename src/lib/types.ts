@@ -1,6 +1,6 @@
 export type Fiat = 'TWD' | 'CNY' | 'VND' | 'USD';
 export type Direction = 'TWD>VND' | 'VND>TWD' | 'CNY>VND' | 'VND>CNY';
-export type SourceId = 'bitopro' | 'binance' | 'binanceFees' | 'esun' | 'gola';
+export type SourceId = 'bitopro' | 'binance' | 'esun' | 'gola';
 
 /** Every fetched value carries when we got it and when the source says it was updated (epoch ms). */
 export interface Stamped {
@@ -33,7 +33,7 @@ export interface BinanceRates extends Stamped {
   CNY: FiatQuote;
 }
 
-/** Express taker fee as a fraction (0.001 = 0.1%). */
+/** Express taker fee as a fraction (0.001 = 0.1%). Fixed in code (see calc/routes.ts); verified 2026-10-08. */
 export interface BinanceFees extends Stamped {
   VND: FiatQuote;
   CNY: FiatQuote;
@@ -59,9 +59,6 @@ export type Marked<T> = T & { stale?: boolean };
 export interface Snapshot {
   generatedAt: number;
   esun?: Marked<EsunRates>;
-  binanceFees?: Marked<BinanceFees>;
-  bitopro?: Marked<BitoproRates>;
-  binance?: Marked<BinanceRates>;
 }
 
 export interface MarketData {

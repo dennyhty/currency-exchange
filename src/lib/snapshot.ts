@@ -1,6 +1,6 @@
 import type { Snapshot } from './types.ts';
 
-export type SnapshotKey = 'esun' | 'binanceFees' | 'bitopro' | 'binance';
+export type SnapshotKey = 'esun';
 export type FetchResult<T> = { ok: true; value: T } | { ok: false; error: string };
 
 /**
@@ -13,7 +13,7 @@ export function mergeSnapshot(
   now: number,
 ): Snapshot {
   const next: Snapshot = { generatedAt: now };
-  const keys: SnapshotKey[] = ['esun', 'binanceFees', 'bitopro', 'binance'];
+  const keys: SnapshotKey[] = ['esun'];
   for (const key of keys) {
     const r = results[key];
     if (r.ok) {

@@ -81,5 +81,5 @@
 ## 5. 對架構的影響
 
 - 不需要 Cloudflare Worker：三個可抓的來源 GitHub runner 都連得到。
-- 即時價格（BitoPro、Binance）由瀏覽器直接抓；排程 Actions 只負責玉山、Binance 費率，並保存其他來源的備援快照。
+- 即時價格（BitoPro、Binance）由瀏覽器直接抓；排程 Actions 只負責玉山。Binance 費率不再每天抓，固定寫在程式（VND 0.1%、CNY 0，2026-10-08 查證）；若 Binance 調整費率，需手動改 `src/calc/routes.ts` 的 `DEFAULT_BINANCE_FEES`。
 - 玉山來源每約 20 秒更新，但使用者決定排程一天只抓一次（台北 09:00），所以玉山的數字最多約 24 小時舊；畫面一律顯示資料年齡。要更即時可把 `deploy.yml` 的 cron 改密，或手動執行 workflow。
