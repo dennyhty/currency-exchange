@@ -50,7 +50,7 @@
 
 ### 下一步
 
-1. 使用者：回答 PLAN §9 的待決定項（手動輸入存放位置、BitoPro 掛單或一鍵買賣、手續費）；沒回覆就用預設值開工。
+1. 使用者：回答 PLAN §9 剩下的待決定項（BitoPro 掛單或一鍵買賣、手續費、試算金額）；沒回覆就用預設值開工。
 2. Phase 2：`src/sources/` 的 adapter（BitoPro、Binance 瀏覽器端；玉山、Binance 費率 Node 端），用 `fixtures/` 寫測試；排程 workflow。
 3. Phase 3：計算引擎（PLAN §4）與畫面。
 
@@ -66,6 +66,7 @@
 
 每次 1–3 行；太長時把舊紀錄移到 `docs/` 下歸檔。
 
+- **2026-10-08**　GolaVisa 手動輸入存在瀏覽器（localStorage），並附貼上 JSON 輔助。
 - **2026-10-08**　使用者決定 GolaVisa（TWD／USD ⇄ VND）改為手動輸入，不做排程抓取；已更新 PLAN、data-sources、本檔。
 - **2026-10-08**　Phase 1 上線（Pages 部署成功、直接推 `main` 會被擋）。GolaVisa 的 JSON API 由使用者查到，從 runner 仍被 Vercel 擋，改採貼上 JSON；欄位對應寫入 `docs/data-sources.md` §4。
 - **2026-10-08**　Phase 0 + 1：探測四個來源（BitoPro、Binance 價格皆 CORS 開放；玉山有 JSON 但無 CORS；GolaVisa 被 Vercel 擋）；建 Vite/TS 骨架與 CI/Pages workflow；移除 probe。
