@@ -68,6 +68,7 @@
 
 每次 1–3 行；太長時把舊紀錄移到 `docs/` 下歸檔。
 
+- **2026-10-08**　查 GolaVisa 上游：`bank_rates` 由排程抓 Vietcombank XML（API 自帶 `source_url`）；TWD／USD 用的雄龍匯率是 Gola 電話確認後手動輸入，查無公開來源。使用者決定**不使用** Vietcombank 數據，GolaVisa 維持手動輸入。
 - **2026-10-08**　排程只抓玉山；Binance 手續費改為固定值（`DEFAULT_BINANCE_FEES`），移除費率抓取與 BitoPro／Binance 備援快照。
 - **2026-10-08**　預設金額改為 TWD 1,000、CNY 100（VND 仍 10,000,000）。
 - **2026-10-08**　GolaVisa 自動更新：網站讀 `data` 分支的 `golavisa.json`（與手動輸入取較新者）；`scripts/publish-golavisa.ts` 驗證後推送；`/update-golavisa` 指令給使用者電腦上的 Claude Code。已用本機假遠端測過發佈流程，尚未在使用者電腦實測。
