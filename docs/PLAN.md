@@ -1,6 +1,6 @@
 # 換匯比較面板 開發計畫
 
-> 狀態：規劃完成，尚未開工　｜　最後更新：2026-10-08
+> 狀態：Phase 0 完成（GolaVisa 待使用者協助）、Phase 1 程式完成　｜　最後更新：2026-10-08
 > 本檔是**設計與計畫**（較少變動）。**開發進度**記錄在 [`CLAUDE.md`](../CLAUDE.md)。
 
 ## 1. 目標
@@ -28,44 +28,35 @@
 ## 2. 前提與目前狀態
 
 - ✅ repo 已改為 **public**（2026-10-08 確認）。免費版的 GitHub Pages 與 branch protection 只支援 public repo。
-- ⚠️ 四個資料來源網域（`api.bitopro.com`、`www.esunbank.com`、`c2c.binance.com`、`www.golavisa.co`）在 Claude 雲端 session 的網路政策下被擋（CONNECT 403），**尚未實際測試過任何來源**。§5 的來源資訊來自文件與搜尋，全部未驗證，由 Phase 0 驗證。
+- ✅ Phase 0 已用 GitHub Actions 探測完四個來源（結果見 [`data-sources.md`](data-sources.md)）。Claude 雲端 session 本身連不到這些網域，所以探測是在 GitHub runner 上做的。
 - 網站是公開的：知道網址的人都看得到。內容只有公開行情，沒有個資、沒有金鑰。
 
 ## 3. 架構
 
 ```
-GitHub Actions（每 5~10 分鐘）
- └ 4 個 adapter：BitoPro / 玉山 / Binance Express / GolaVisa
-    └ 格式與合理範圍檢查 → rates.json（每筆含 fetchedAt、sourceUpdatedAt）
-       └ 連同網站部署到 GitHub Pages
-手機／電腦 → https://dennyhty.github.io/currency-exchange/
- └ 讀 rates.json → 計算引擎 → 路徑比較 + 最划算標示 + 各來源資料年齡
+瀏覽器（手機／電腦）→ https://dennyhty.github.io/currency-exchange/
+ ├ 即時直接抓：BitoPro 掛單簿、Binance Express 預估價（兩者都允許跨網域）
+ ├ 讀 rates.json（隨網站發佈）：玉山即期匯率、Binance 費率，另有 BitoPro／Binance 的備援快照
+ ├ GolaVisa：使用者貼上或手動輸入（網站有 Vercel 機器人檢查，不自動抓）
+ └ 計算引擎 → 路徑比較 + 最划算標示 + 各來源資料年齡
+
+GitHub Actions（每 5~10 分鐘）→ 抓玉山、Binance 費率 → rates.json → 部署到 GitHub Pages
 ```
 
-- 全程不需要伺服器、不需要金鑰。
+- 全程不需要伺服器、不需要金鑰，也不需要 Cloudflare Worker（三個可抓的來源 GitHub runner 都連得到）。
 - 技術：Vite + TypeScript + Vitest；繁體中文介面、手機優先、深色模式。
-- **資料不是即時的**：Actions 排程最短 5 分鐘，實務上常延遲（網路上有說嚴重時到數十分鐘，非官方數字）。畫面顯示「幾分鐘前的快照」並標示資料年齡。
-- public repo 60 天沒活動，排程會被自動停用 → 需加 keepalive。
-- **升級路徑（不是第一步）**：若 Phase 0 發現 GitHub 的 IP 被 Binance／玉山擋，或需要更即時，就加一個免費的 Cloudflare Worker 當代理與快取。程式仍放本 repo，網頁仍在 GitHub Pages。
+- 價格即時（瀏覽器抓）；只有玉山是快照，畫面標示資料年齡。Actions 排程最短 5 分鐘、可能延遲；public repo 60 天沒活動排程會被停用，需加 keepalive。
+- 每個來源各有兩個時間：`fetchedAt`（抓取時間）與 `sourceUpdatedAt`（來源自己標示的更新時間，沒有就是 `null`）。玉山的 `UpdateTime` 是 `/Date(毫秒)/`。
 
-### rates.json 草案（Phase 0／2 定稿）
-
-每個來源各有兩個時間：`fetchedAt` 是我們抓取的時間，`sourceUpdatedAt` 是來源自己標示的更新時間（沒有就是 `null`）。
+### rates.json 草案（Phase 2 定稿）
 
 ```jsonc
 {
   "generatedAt": "<ISO 8601>",
-  "sources": {
-    "bitopro":        { "status": "ok|stale|error", "fetchedAt": "<ISO>", "sourceUpdatedAt": null,
-                        "usdtTwd": { "ask": "<number>", "bid": "<number>", "last": "<number>" } },
-    "esun":           { "status": "...", "fetchedAt": "<ISO>", "sourceUpdatedAt": "<ISO，牌價時間>",
-                        "usdTwdSpot": { "bankBuy": "<number>", "bankSell": "<number>" } },
-    "binanceExpress": { "status": "...", "fetchedAt": "<ISO>", "sourceUpdatedAt": null,
-                        "VND": { "buy": "<number>", "sell": "<number>", "feeRate": 0.001 },
-                        "CNY": { "buy": "<number>", "sell": "<number>" } },
-    "golavisa":       { "status": "...", "fetchedAt": "<ISO>", "sourceUpdatedAt": "<ISO，網站標示的更新時間>",
-                        "rates": "<TWD↔VND、USD↔VND，實際欄位待 Phase 0 確認>" }
-  }
+  "esun": { "status": "ok|stale|error", "fetchedAt": "<ISO>", "sourceUpdatedAt": "<ISO>",
+            "usdTwdSpot": { "bankBuy": 31.85, "bankSell": 31.95 } },
+  "binanceFees": { "status": "...", "fetchedAt": "<ISO>", "VND": 0.001, "CNY": 0 },
+  "fallback": { "bitopro": { "...": "..." }, "binanceExpress": { "...": "..." } }
 }
 ```
 
@@ -106,25 +97,22 @@ Phase 0 要與來源頁面對帳的點：
 - CNY 那一腿有沒有手續費。
 - 玉山要鎖定「即期」欄位，避開「現金」與「網銀優惠」欄；非營業時間牌價是否仍更新。
 
-## 5. 資料來源現況（來自文件／搜尋，**尚未實測**）
+## 5. 資料來源現況（已實測，詳見 [`data-sources.md`](data-sources.md)）
 
-| 來源 | 目前知道的 | 風險 |
-|---|---|---|
-| BitoPro | 官方公開 REST，免登入，每 IP 600 次/分。用 `api.bitopro.com/v3/order-book/usdt_twd` 取 ask／bid，`/tickers/usdt_twd` 取最新成交價。文件摘要另提到 OTC 報價查詢。 | 低 |
-| 玉山 | 沒找到官方公開 API，現有開源工具都是解析網頁。需用瀏覽器 DevTools 找頁面背後的 JSON。 | 中 |
-| Binance Express | 找不到官方文件。唯一線索：Binance Skills Hub 的 P2P skill 列出免登入的 `www.binance.com/bapi/c2c/v1/public/c2c/agent/quote-price`（參數 fiat／asset／tradeType）。但不確定它等於 Express 頁的 Estimated price，回傳格式也沒查到；`/bapi/` 是內部路徑，隨時可能改。 | **高** |
-| GolaVisa | 搜尋完全找不到該站資料；頁面結構、有沒有「更新時間」欄位都未知。 | 未知 |
+| 來源 | 結果 |
+|---|---|
+| BitoPro | 官方公開 GET，瀏覽器可直接呼叫。掛單簿 ask／bid 或「一鍵買賣」OTC 報價皆可取得；預設手續費 maker 0.1%／taker 0.2%。 |
+| 玉山 | `LastRateInfo`（POST）回 JSON：`BBoardRate`＝即期銀行買入、`SBoardRate`＝即期銀行賣出、`UpdateTime`。無 CORS，只能由 Actions 抓。 |
+| Binance Express | `agent/quote-price`（GET）＝頁面 Estimated price，四組數字完全一致，允許跨網域；費率 API：VND 0.1%、CNY 0。買賣價倒掛，屬預估價，需標示。 |
+| GolaVisa | 被 Vercel Security Checkpoint 擋住（兩次皆 HTTP 429，無頭 Chrome 也驗證失敗），不做繞過。需要使用者協助。 |
 
 ## 6. 開發階段
 
-### Phase 0｜資料來源探測（最重要，決定架構）
+### Phase 0｜資料來源探測 ✅（GolaVisa 除外）
 
-- 對每個來源確認：有沒有 JSON、欄位與買賣方向、時間戳、GitHub runner 連不連得到、瀏覽器 CORS、頻率限制與使用條款。
-- 存下真實回應當測試資料（`fixtures/`），產出 `docs/data-sources.md`。
-- 做法二選一：
-  - **(a)** 使用者把四個網域加進雲端環境的 Allowed domains（session 標題列的環境選單 → Edit → Network access，[步驟](https://code.claude.com/docs/en/cloud-environments#network-access)），Claude 在 session 內直接測。
-  - **(b)** 在開發分支推一個一次性的 probe workflow，讓 GitHub Actions 去打四個來源，Claude 讀 log。**建議 (b)**：它同時驗證「GitHub 的 IP 連不連得到」，比 (a) 更貼近正式環境。
-- 驗收：四個來源都確定能取得機器可讀的資料，或已決定備案；時間戳語意清楚；架構（GitHub Actions 或加 Worker）定案。
+- 以一次性的 GitHub Actions probe 完成，結果在 `docs/data-sources.md`，真實回應在 `fixtures/`，probe 已移除（在 git 歷史）。
+- 結論：架構定案為「瀏覽器即時抓 + Actions 快照」，不需要 Worker。
+- 未決：GolaVisa 的取得方式（見 §9）、玉山非營業時間行為。
 
 ### Phase 1｜骨架、GitHub 管控、空殼上線（可與 Phase 0 並行）
 
@@ -172,11 +160,13 @@ Phase 0 要與來源頁面對帳的點：
 
 | # | 問題 | 預設 | 狀態 |
 |---|---|---|---|
-| 1 | Phase 0 探測方式：(a) 放行網域，或 (b) GitHub Actions probe | (b) | 待回覆 |
-| 2 | 能接受「幾分鐘前的快照 + 資料年齡」嗎？ | 接受；需要更即時再加 Worker | 待回覆 |
-| 3 | 手續費納入範圍：BitoPro 是掛單還是「一鍵買賣」？銀行匯款費、USDT 提領網路費要不要預設納入？ | 只計 Binance 0.1% | 待回覆 |
-| 4 | 試算金額預設值 | TWD 30,000／CNY 7,000／VND 10,000,000 | 待回覆 |
-| 5 | 介面語言 | 繁體中文 | 預設 |
+| 1 | Phase 0 探測方式 | GitHub Actions probe | ✅ 已完成 |
+| 2 | 即時性 | BitoPro／Binance 即時，玉山快照 | ✅ 已定案 |
+| 3 | GolaVisa：請在自己的瀏覽器開頁面，把整頁文字貼給我（或截圖）；並決定存在「該裝置瀏覽器」還是「repo 資料檔（跨裝置）」 | 貼上解析，存在瀏覽器 | **待回覆** |
+| 4 | BitoPro 你是用掛單簿還是「一鍵買賣」？銀行匯款費、USDT 提領網路費要不要預設納入？ | 掛單簿；只計 Binance VND 0.1% | 待回覆 |
+| 5 | 試算金額預設值 | TWD 30,000／CNY 7,000／VND 10,000,000 | 待回覆 |
+| 6 | 介面語言 | 繁體中文 | 預設 |
+| 7 | GitHub 網頁設定（Claude 無法代做）：Settings → Pages → Source 選 GitHub Actions；`main` 保護規則；合併 PR | — | 待使用者 |
 
 ## 10. 參考資料
 

@@ -25,17 +25,18 @@
 
 ## 已知限制
 
-- Claude 雲端 session 的網路政策擋住 BitoPro、玉山、Binance、GolaVisa 四個來源網域（CONNECT 403），WebFetch 也受同一個政策限制，所以在 session 內無法直接測試來源。解法：(a) 使用者把網域加進環境的 Allowed domains；(b) 推一次性 probe workflow，由 GitHub Actions 去打並讀 log（見 PLAN.md Phase 0）。
+- Claude 雲端 session 的網路政策擋住四個來源網域（CONNECT 403），WebFetch 也一樣。要測外部來源：推一次性的 probe workflow（push 觸發），讀 GitHub Actions 日誌（`get_job_logs`；日誌大時會存成檔案，用 python 解碼）。Phase 0 就是這樣做的，結果在 `docs/data-sources.md`。
+- GolaVisa 有 Vercel 機器人檢查，不繞過。
 - Repo 設定（Pages Source、branch protection）Claude 無法操作，需使用者在 GitHub 網頁設定。
 
 ## 開發進度
 
 | Phase | 內容 | 狀態 |
 |---|---|---|
-| 0 | 資料來源探測（決定架構） | ⏳ 未開始，等使用者決定探測方式 |
-| 1 | 骨架、GitHub 管控、空殼上線 | ⏳ 未開始（可與 Phase 0 並行） |
-| 2 | 抓取層（adapters + 排程） | ⏳ 未開始 |
-| 3 | 計算引擎與畫面 | ⏳ 未開始 |
+| 0 | 資料來源探測（決定架構） | ✅ 完成（GolaVisa 待使用者貼頁面內容） |
+| 1 | 骨架、GitHub 管控、空殼上線 | 🚧 程式與 workflow 完成；待使用者啟用 Pages、合併 PR 後上線 |
+| 2 | 抓取層（玉山、Binance 費率 + 瀏覽器端 BitoPro／Binance） | ⏳ 未開始 |
+| 3 | 計算引擎與畫面（含 GolaVisa 貼上解析） | ⏳ 未開始 |
 | 4 | 選配（走勢、通知、PWA…） | ⏳ 未開始 |
 
 狀態圖例：⏳ 未開始｜🚧 進行中｜✅ 完成｜⛔ 受阻
@@ -43,27 +44,31 @@
 ### 已完成
 
 - [x] 2026-10-08　規劃完成並寫入 `docs/PLAN.md`
-- [x] 2026-10-08　repo 改為 public（Pages、branch protection 的前提）
+- [x] 2026-10-08　repo 改為 public
+- [x] 2026-10-08　Phase 0 探測完成：`docs/data-sources.md`、`fixtures/`
+- [x] 2026-10-08　Phase 1 骨架：Vite + TS + Vitest、ESLint/Prettier、CI、Pages 部署 workflow、Dependabot、PR 範本
 
 ### 下一步
 
-1. 等使用者回覆 PLAN.md §9 的待確認事項（沒意見則用預設）。
-2. 開始 Phase 0（資料來源探測）與 Phase 1（專案骨架 + Pages 部署）。
+1. 使用者：貼 GolaVisa 頁面文字；啟用 Pages（Source＝GitHub Actions）；設 `main` 保護；合併 PR。
+2. Phase 2：`src/sources/` 的 adapter（BitoPro、Binance 瀏覽器端；玉山、Binance 費率 Node 端），用 `fixtures/` 寫測試；排程 workflow。
+3. Phase 3：計算引擎（PLAN §4）與畫面。
 
 ### 待使用者決定
 
-見 PLAN.md §9：探測方式、即時性、手續費範圍、試算金額預設值。
+見 PLAN.md §9。
 
 ### 阻礙
 
-- 來源網域被雲端 session 擋住（見「已知限制」），Phase 0 需使用者放行網域，或改用 Actions probe。
+- GolaVisa 無法自動抓（Vercel 檢查站），等使用者提供頁面樣本。
 
 ## 工作紀錄（最新在上）
 
 每次 1–3 行；太長時把舊紀錄移到 `docs/` 下歸檔。
 
+- **2026-10-08**　Phase 0 + 1：探測四個來源（BitoPro、Binance 價格皆 CORS 開放；玉山有 JSON 但無 CORS；GolaVisa 被 Vercel 擋）；建 Vite/TS 骨架與 CI/Pages workflow；移除 probe。
 - **2026-10-08**　規劃階段。確認 repo 為 public；四個來源網域在雲端 session 皆被擋（403），改以文件／搜尋整理來源資訊（未驗證）；產出 `docs/PLAN.md` 與本檔。尚無程式碼。
 
 ## 常用指令
 
-專案骨架建立後補上（安裝、開發、測試、建置）。
+`npm ci`、`npm run dev`、`npm test`、`npm run check`（lint + typecheck + format + test + build，PR 前跑）。
