@@ -54,7 +54,7 @@
 
 1. 確認明天台北 09:00 的排程有跑、`rates.json` 有更新（schedule 不保證準時）。
 2. 玉山非營業時間／週末的 `UpdateTime` 行為待觀察。
-3. 視需要做 Phase 4（走勢、通知、PWA）；Dependabot PR #2（checkout 6→7）可合併、#3（`@types/node` 22→26）建議關閉。
+3. 視需要做 Phase 4（走勢、通知、PWA）。
 
 ### 待使用者決定
 
@@ -68,6 +68,7 @@
 
 每次 1–3 行；太長時把舊紀錄移到 `docs/` 下歸檔。
 
+- **2026-10-08**　Dependabot：合併 PR #2（checkout 6→7）；關閉 #3（`@types/node` 22→26），並在 `dependabot.yml` 忽略 `@types/node` 主版本升級（跟 `.nvmrc` 的 Node 版本一起升）。
 - **2026-10-08**　查 GolaVisa 上游：`bank_rates` 由排程抓 Vietcombank XML（API 自帶 `source_url`）；TWD／USD 用的雄龍匯率是 Gola 電話確認後手動輸入，查無公開來源。使用者決定**不使用** Vietcombank 數據，GolaVisa 維持手動輸入。
 - **2026-10-08**　排程只抓玉山；Binance 手續費改為固定值（`DEFAULT_BINANCE_FEES`），移除費率抓取與 BitoPro／Binance 備援快照。
 - **2026-10-08**　預設金額改為 TWD 1,000、CNY 100（VND 仍 10,000,000）。
