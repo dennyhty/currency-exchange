@@ -1,0 +1,118 @@
+{
+  "fetchedAt": "2026-10-08T13:23:04.929Z",
+  "response": {
+    "snapshot": {
+      "rates": {
+        "TWD": {
+          "sell": 810,
+          "buy_cash": 781,
+          "buy_transfer": 781
+        },
+        "USD": {
+          "sell": 26110,
+          "buy_cash": 25960,
+          "buy_transfer": 25960
+        }
+      },
+      "bank_rates": {
+        "AUD": {
+          "sell": 18360,
+          "buy_cash": 17612,
+          "buy_transfer": 17789
+        },
+        "CAD": {
+          "sell": 18509,
+          "buy_cash": 17755,
+          "buy_transfer": 17934
+        },
+        "CNY": {
+          "sell": 3937,
+          "buy_cash": 3777,
+          "buy_transfer": 3815
+        },
+        "EUR": {
+          "sell": 29845,
+          "buy_cash": 28350,
+          "buy_transfer": 28637
+        },
+        "GBP": {
+          "sell": 34859,
+          "buy_cash": 33438,
+          "buy_transfer": 33776
+        },
+        "HKD": {
+          "sell": 3374,
+          "buy_cash": 3217,
+          "buy_transfer": 3250
+        },
+        "JPY": {
+          "sell": 169,
+          "buy_cash": 159,
+          "buy_transfer": 160
+        },
+        "KRW": {
+          "sell": 20.24,
+          "buy_cash": 16.79,
+          "buy_transfer": 18.65
+        },
+        "MYR": {
+          "sell": 6431,
+          "buy_cash": 6294,
+          "buy_transfer": 6294
+        },
+        "SGD": {
+          "sell": 20656,
+          "buy_cash": 19775,
+          "buy_transfer": 19974
+        },
+        "THB": {
+          "sell": 789,
+          "buy_cash": 681,
+          "buy_transfer": 757
+        },
+        "USD": {
+          "sell": 26170,
+          "buy_cash": 25760,
+          "buy_transfer": 25790
+        }
+      },
+      "source": "vietcombank",
+      "source_url": "https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx",
+      "note": null,
+      "updated_at": "2026-10-08T03:40:56.810248+00:00",
+      "hung_long_updated_at": "2026-10-08T03:06:08.810039+00:00",
+      "bank_updated_at": "2026-10-08T03:40:56.810248+00:00",
+      "updated_by_name": "cron_vietcombank"
+    },
+    "shops": [
+      {
+        "id": "a581cc9e-f144-43a2-8aca-44a09c29ba33",
+        "name": {
+          "zh_tw": "雄龍換匯店 Hung Long",
+          "zh_cn": "雄龙换汇店 Hung Long",
+          "en": "Hung Long Money Exchange"
+        },
+        "address": {
+          "zh_tw": "（待管理員填入正確地址）",
+          "zh_cn": "（待管理员填入正确地址）",
+          "en": "(Address pending admin update)"
+        },
+        "google_maps_url": "https://maps.app.goo.gl/4awuF17usZKYkZtC6?g_st=ic",
+        "phone": null,
+        "whatsapp": null,
+        "hours": {
+          "zh_tw": "（待管理員填入營業時間）",
+          "zh_cn": "（待管理员填入营业时间）",
+          "en": "(Hours pending admin update)"
+        },
+        "photo_url": null,
+        "note": {
+          "zh_tw": "近 Ben Thanh 市場，台灣旅客最愛，匯率比銀行好。記得帶護照。",
+          "zh_cn": "近 Ben Thanh 市场，台湾旅客最爱，汇率比银行好。记得带护照。",
+          "en": "Near Ben Thanh Market. Best rates for Taiwanese travellers. Bring your passport."
+        },
+        "sort_order": 10
+      }
+    ]
+  }
+}
