@@ -77,6 +77,7 @@
 - 已定案：手動輸入的數字存在該裝置的瀏覽器（localStorage），輸入框附「貼上 JSON 自動填欄位」輔助。
 - **自動更新（2026-10-08 新增）**：使用者在**自己的電腦**上用 Claude Code ＋ Claude in Chrome，在真人瀏覽器打開 API 網址、讀出 JSON，再執行 `scripts/publish-golavisa.ts`（指令檔 `.claude/commands/update-golavisa.md`，用 `/update-golavisa` 觸發）。腳本先驗證數字，通過才把 `{ fetchedAt, response }` 推到 `data` 分支的 `golavisa.json`；網站讀 `raw.githubusercontent.com/.../data/golavisa.json`（允許跨網域），與手動輸入比較，用較新的那份。檔案不存在或過舊時，自然退回手動輸入。
 - 上游（2026-10-08 查證）：`bank_rates` 是 Gola 排程抓 Vietcombank `pXML.aspx`（回應的 `source_url`、`updated_by_name: cron_vietcombank`），買賣價差與 Vietcombank 一致；`rates`（雄龍 Hung Long，胡志明市第 1 郡）是 Gola 電話確認後人工輸入，查無店家公開的匯率來源。使用者決定不改用 Vietcombank。
+- 歷史走勢的排程也讀同一個 `golavisa.json`（在 runner 上直接讀 `data` 分支的檔案），只在 72 小時內才記錄。
 - 限制：要使用者的電腦開機且 Chrome 開著；遇到驗證頁時必須由使用者自己完成，不得繞過；一天一次即可。
 
 ## 5. 對架構的影響
