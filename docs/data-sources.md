@@ -11,7 +11,7 @@
 | Binance Express 價格 | `agent/quote-price`（GET） | ✅ 不需瀏覽器 | ✅ `*` | 瀏覽器即時抓 |
 | Binance Express 費率 | `commission-rate/taker`（POST） | ✅ | ❌ 無 CORS 標頭 | 排程快照（很少變動） |
 | 玉山 即期匯率 | `LastRateInfo`（POST，空 body） | ✅ | ❌ 無 CORS 標頭 | 排程快照 |
-| GolaVisa | `GET /api/exchange-rates`（JSON） | ❌ Vercel 檢查站（HTTP 429） | 未測 | 使用者貼上 JSON（見 §4） |
+| GolaVisa | `GET /api/exchange-rates`（JSON） | ❌ Vercel 檢查站（HTTP 429） | 未測 | 手動輸入（見 §4） |
 
 ## 1. BitoPro（USDT/TWD）
 
@@ -58,7 +58,7 @@
 
 - 頁面背後是 `GET https://www.golavisa.co/api/exchange-rates`（Next.js 內部 API，由使用者在自己的瀏覽器查到；`Cache-Control: no-store`）。
 - 從 GitHub runner 呼叫（plain curl、帶瀏覽器 UA）也是 HTTP 429、`x-vercel-mitigated: challenge`，頁面與 API 都被 Vercel 檢查站擋住。**不做繞過。**
-- 在使用者自己的瀏覽器直接開這個網址是正常的，回傳 JSON，所以面板採用「使用者貼上 JSON」：打開該網址 → 全選複製 → 貼到面板 → 面板解析並存起來。
+- **決定（2026-10-08）：面板用手動輸入。** 需要輸入：TWD→VND、VND→TWD、USD→VND、VND→USD 四個數字（都是「1 外幣＝N VND」），加上網站標示的更新時間；可選填 `buy_transfer`。未來若要省事，可加「貼上 JSON 自動填欄位」當輔助（`/api/exchange-rates` 在使用者瀏覽器可正常開啟），但不是必要功能。
 - 回應結構（範例見 `fixtures/golavisa/exchange-rates.sample.json`）：
   - `snapshot.rates`：Hung Long 換匯店，`USD`、`TWD`，每個有 `sell`、`buy_cash`、`buy_transfer`，單位都是「1 外幣 = N VND」。
   - `snapshot.bank_rates`：Vietcombank 牌價（USD、CNY 等，沒有 TWD）。
@@ -74,7 +74,7 @@
 
   探測當天數字：TWD 買 781／賣 810；USD 買 25,960／賣 26,110。與頁面計算機規則一致（TWD、USD 用 Hung Long）。
 - 這是 Gola 前端的內部 API，欄位可能變動；解析要防欄位缺漏，缺了就顯示「資料不足」。
-- 待確認：貼上的資料要存在該裝置的瀏覽器，還是存在 repo 資料檔（跨裝置共用）。
+- 待確認：手動輸入的數字存在該裝置的瀏覽器，還是存在 repo 資料檔（跨裝置共用）。
 
 ## 5. 對架構的影響
 

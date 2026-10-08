@@ -37,7 +37,7 @@
 瀏覽器（手機／電腦）→ https://dennyhty.github.io/currency-exchange/
  ├ 即時直接抓：BitoPro 掛單簿、Binance Express 預估價（兩者都允許跨網域）
  ├ 讀 rates.json（隨網站發佈）：玉山即期匯率、Binance 費率，另有 BitoPro／Binance 的備援快照
- ├ GolaVisa：使用者貼上或手動輸入（網站有 Vercel 機器人檢查，不自動抓）
+ ├ GolaVisa：使用者手動輸入四個匯率與網站標示的更新時間（網站有 Vercel 機器人檢查，不自動抓）
  └ 計算引擎 → 路徑比較 + 最划算標示 + 各來源資料年齡
 
 GitHub Actions（每 5~10 分鐘）→ 抓玉山、Binance 費率 → rates.json → 部署到 GitHub Pages
@@ -104,7 +104,7 @@ Phase 0 要與來源頁面對帳的點：
 | BitoPro | 官方公開 GET，瀏覽器可直接呼叫。掛單簿 ask／bid 或「一鍵買賣」OTC 報價皆可取得；預設手續費 maker 0.1%／taker 0.2%。 |
 | 玉山 | `LastRateInfo`（POST）回 JSON：`BBoardRate`＝即期銀行買入、`SBoardRate`＝即期銀行賣出、`UpdateTime`。無 CORS，只能由 Actions 抓。 |
 | Binance Express | `agent/quote-price`（GET）＝頁面 Estimated price，四組數字完全一致，允許跨網域；費率 API：VND 0.1%、CNY 0。買賣價倒掛，屬預估價，需標示。 |
-| GolaVisa | 有 JSON API（`/api/exchange-rates`），但頁面與 API 都被 Vercel 檢查站擋住，不做繞過。改由使用者在自己的瀏覽器打開該網址、複製 JSON、貼到面板解析（含更新時間）。 |
+| GolaVisa | 有 JSON API（`/api/exchange-rates`），但頁面與 API 都被 Vercel 檢查站擋住，不做繞過。**決定（2026-10-08）：面板提供手動輸入**，欄位見 §4 與 `data-sources.md` §4。 |
 
 ## 6. 開發階段
 
@@ -162,7 +162,7 @@ Phase 0 要與來源頁面對帳的點：
 |---|---|---|---|
 | 1 | Phase 0 探測方式 | GitHub Actions probe | ✅ 已完成 |
 | 2 | 即時性 | BitoPro／Binance 即時，玉山快照 | ✅ 已定案 |
-| 3 | GolaVisa 貼上的 JSON 要存在「該裝置瀏覽器」還是「repo 資料檔（跨裝置）」 | 存在瀏覽器 | 待回覆（API 結構已由使用者提供） |
+| 3 | 手動輸入的 GolaVisa 數字存在「該裝置瀏覽器」還是「repo 資料檔（跨裝置）」 | 存在瀏覽器 | 待回覆 |
 | 4 | BitoPro 你是用掛單簿還是「一鍵買賣」？銀行匯款費、USDT 提領網路費要不要預設納入？ | 掛單簿；只計 Binance VND 0.1% | 待回覆 |
 | 5 | 試算金額預設值 | TWD 30,000／CNY 7,000／VND 10,000,000 | 待回覆 |
 | 6 | 介面語言 | 繁體中文 | 預設 |

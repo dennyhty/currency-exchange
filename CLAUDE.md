@@ -33,10 +33,10 @@
 
 | Phase | 內容 | 狀態 |
 |---|---|---|
-| 0 | 資料來源探測（決定架構） | ✅ 完成（GolaVisa：API 結構已知，採貼上 JSON） |
+| 0 | 資料來源探測（決定架構） | ✅ 完成（GolaVisa：決定手動輸入） |
 | 1 | 骨架、GitHub 管控、空殼上線 | ✅ 完成（Pages 已部署、`main` 保護已驗證，PR #1 已合併） |
 | 2 | 抓取層（玉山、Binance 費率 + 瀏覽器端 BitoPro／Binance） | ⏳ 未開始 |
-| 3 | 計算引擎與畫面（含 GolaVisa 貼上解析） | ⏳ 未開始 |
+| 3 | 計算引擎與畫面（含 GolaVisa 手動輸入） | ⏳ 未開始 |
 | 4 | 選配（走勢、通知、PWA…） | ⏳ 未開始 |
 
 狀態圖例：⏳ 未開始｜🚧 進行中｜✅ 完成｜⛔ 受阻
@@ -50,7 +50,7 @@
 
 ### 下一步
 
-1. 使用者：回答 PLAN §9 的待決定項（GolaVisa 儲存位置、BitoPro 掛單或一鍵買賣、手續費）。
+1. 使用者：回答 PLAN §9 的待決定項（手動輸入存放位置、BitoPro 掛單或一鍵買賣、手續費）；沒回覆就用預設值開工。
 2. Phase 2：`src/sources/` 的 adapter（BitoPro、Binance 瀏覽器端；玉山、Binance 費率 Node 端），用 `fixtures/` 寫測試；排程 workflow。
 3. Phase 3：計算引擎（PLAN §4）與畫面。
 
@@ -60,12 +60,13 @@
 
 ### 阻礙
 
-- GolaVisa 無法自動抓（頁面與 `/api/exchange-rates` 都被 Vercel 檢查站擋）。已知 API 結構，面板用「貼上 JSON」。
+- GolaVisa 無法自動抓（頁面與 `/api/exchange-rates` 都被 Vercel 檢查站擋）。決定：面板提供手動輸入（四個匯率＋網站更新時間）。
 
 ## 工作紀錄（最新在上）
 
 每次 1–3 行；太長時把舊紀錄移到 `docs/` 下歸檔。
 
+- **2026-10-08**　使用者決定 GolaVisa（TWD／USD ⇄ VND）改為手動輸入，不做排程抓取；已更新 PLAN、data-sources、本檔。
 - **2026-10-08**　Phase 1 上線（Pages 部署成功、直接推 `main` 會被擋）。GolaVisa 的 JSON API 由使用者查到，從 runner 仍被 Vercel 擋，改採貼上 JSON；欄位對應寫入 `docs/data-sources.md` §4。
 - **2026-10-08**　Phase 0 + 1：探測四個來源（BitoPro、Binance 價格皆 CORS 開放；玉山有 JSON 但無 CORS；GolaVisa 被 Vercel 擋）；建 Vite/TS 骨架與 CI/Pages workflow；移除 probe。
 - **2026-10-08**　規劃階段。確認 repo 為 public；四個來源網域在雲端 session 皆被擋（403），改以文件／搜尋整理來源資訊（未驗證）；產出 `docs/PLAN.md` 與本檔。尚無程式碼。
