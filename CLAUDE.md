@@ -26,7 +26,7 @@
 ## 已知限制
 
 - Claude 雲端 session 的網路政策擋住四個來源網域（CONNECT 403），WebFetch 也一樣。要測外部來源：推一次性的 probe workflow（push 觸發），讀 GitHub Actions 日誌（`get_job_logs`；日誌大時會存成檔案，用 python 解碼）。Phase 0 就是這樣做的，結果在 `docs/data-sources.md`。
-- GolaVisa 有 Vercel 機器人檢查，不繞過。
+- GolaVisa 有 Vercel 機器人檢查，不繞過。只有使用者電腦上的真人瀏覽器能讀；在那邊用 `/update-golavisa`（`.claude/commands/update-golavisa.md`）→ `scripts/publish-golavisa.ts` 推到 `data` 分支。`data` 分支沒有保護規則，只放 `golavisa.json`，不要合進 `main`。
 - Repo 設定（Pages Source、branch protection）Claude 無法操作，需使用者在 GitHub 網頁設定。
 
 ## 開發進度
@@ -35,8 +35,8 @@
 |---|---|---|
 | 0 | 資料來源探測（決定架構） | ✅ 完成（GolaVisa：決定手動輸入） |
 | 1 | 骨架、GitHub 管控、空殼上線 | ✅ 完成（Pages 已部署、`main` 保護已驗證，PR #1 已合併） |
-| 2 | 抓取層（玉山、Binance 費率 + 瀏覽器端 BitoPro／Binance） | 🚧 程式與測試完成；排程要合併到 `main` 後才會跑，尚待在 runner 上實測 |
-| 3 | 計算引擎與畫面（含 GolaVisa 手動輸入） | 🚧 完成並用真實回應範例在瀏覽器驗證；待 PR 合併上線 |
+| 2 | 抓取層（玉山、Binance 費率 + 瀏覽器端 BitoPro／Binance） | ✅ 完成並上線（runner 實測四個來源皆成功；排程每天台北 09:00） |
+| 3 | 計算引擎與畫面（含 GolaVisa 手動輸入） | ✅ 完成並上線（PR #4；使用者在手機確認網站正常） |
 | 4 | 選配（走勢、通知、PWA…） | ⏳ 未開始 |
 
 狀態圖例：⏳ 未開始｜🚧 進行中｜✅ 完成｜⛔ 受阻
@@ -52,9 +52,9 @@
 
 ### 下一步
 
-1. 開 PR → CI 通過（PR 上的 build 會在 runner 實跑 `fetch-snapshot`，驗證玉山與 Binance 費率）→ 合併上線。
-2. 合併後確認：排程有跑（Actions 的 schedule）、網站 `rates.json` 有更新、手機實測。
-3. 玉山非營業時間／週末的 `UpdateTime` 行為待觀察；之後視需要做 Phase 4（走勢、通知、PWA）。
+1. 確認明天台北 09:00 的排程有跑、`rates.json` 有更新（schedule 不保證準時）。
+2. 玉山非營業時間／週末的 `UpdateTime` 行為待觀察。
+3. 視需要做 Phase 4（走勢、通知、PWA）；Dependabot PR #2（checkout 6→7）可合併、#3（`@types/node` 22→26）建議關閉。
 
 ### 待使用者決定
 
@@ -68,6 +68,8 @@
 
 每次 1–3 行；太長時把舊紀錄移到 `docs/` 下歸檔。
 
+- **2026-10-08**　GolaVisa 自動更新：網站讀 `data` 分支的 `golavisa.json`（與手動輸入取較新者）；`scripts/publish-golavisa.ts` 驗證後推送；`/update-golavisa` 指令給使用者電腦上的 Claude Code。已用本機假遠端測過發佈流程，尚未在使用者電腦實測。
+- **2026-10-08**　PR #4 合併、網站上線，使用者確認可用；Phase 2、3 完成。
 - **2026-10-08**　使用者決定排程一天一次（台北 09:00，cron `0 1 * * *`）；玉山數字最多約 24 小時舊，新鮮度門檻調成 6 小時警示／36 小時過期。
 - **2026-10-08**　Phase 2/3 一次做完：adapter＋公式引擎＋畫面＋排程快照。預設值：BitoPro 掛單簿（設定可切一鍵買賣）、只計 Binance VND 0.1%（BitoPro 手續費可自填）。數字用手算案例鎖住買賣方向。
 - **2026-10-08**　GolaVisa 手動輸入存在瀏覽器（localStorage），並附貼上 JSON 輔助。

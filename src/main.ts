@@ -16,7 +16,7 @@ import type {
 } from './lib/types.ts';
 import { fetchBinanceQuotes } from './sources/binance.ts';
 import { fetchBitopro } from './sources/bitopro.ts';
-import { parseGolaJson, validateGola } from './sources/golavisa.ts';
+import { fetchGolaFile, newerGola, parseGolaJson, validateGola } from './sources/golavisa.ts';
 import { el } from './ui/dom.ts';
 
 const REPO_URL = 'https://github.com/dennyhty/currency-exchange';
@@ -27,10 +27,11 @@ interface State {
   amount: number;
   settings: Settings;
   gola: GolaRates | undefined;
+  remoteGola: GolaRates | null;
   liveBitopro: BitoproRates | undefined;
   liveBinance: BinanceRates | undefined;
   snapshot: Snapshot | null;
-  errors: Partial<Record<'bitopro' | 'binance' | 'snapshot', string>>;
+  errors: Partial<Record<'bitopro' | 'binance' | 'snapshot' | 'gola', string>>;
   loading: boolean;
   now: number;
 }
@@ -40,6 +41,7 @@ const state: State = {
   amount: DIRECTIONS['TWD>VND'].defaultAmount,
   settings: loadSettings(),
   gola: loadGola(),
+  remoteGola: null,
   liveBitopro: undefined,
   liveBinance: undefined,
   snapshot: null,
@@ -56,7 +58,7 @@ function marketData(): MarketData {
     binance: state.liveBinance ?? s?.binance,
     esun: s?.esun,
     binanceFees: s?.binanceFees,
-    gola: state.gola,
+    gola: newerGola(state.gola, state.remoteGola),
   };
 }
 
@@ -171,7 +173,7 @@ function renderStatus(container: HTMLElement): void {
     [
       'gola',
       md.gola
-        ? `TWD ${md.gola.twdToVnd}／${md.gola.vndToTwd}；USD ${nf(md.gola.usdToVnd, 0)}／${nf(md.gola.vndToUsd, 0)} VND`
+        ? `${md.gola.origin === 'remote' ? '自動' : '手動'}・TWD ${md.gola.twdToVnd}／${md.gola.vndToTwd}；USD ${nf(md.gola.usdToVnd, 0)}／${nf(md.gola.vndToUsd, 0)} VND`
         : '請在下方手動輸入',
     ],
   ];
@@ -383,10 +385,11 @@ function build(root: HTMLElement): void {
     state.loading = true;
     refreshBtn.disabled = true;
     refreshBtn.textContent = '更新中…';
-    const [b, x, s] = await Promise.allSettled([
+    const [b, x, s, rg] = await Promise.allSettled([
       fetchBitopro(),
       fetchBinanceQuotes(),
       loadSnapshot(),
+      fetchGolaFile(),
     ]);
     const msg = (r: PromiseRejectedResult): string =>
       r.reason instanceof Error ? r.reason.message : String(r.reason);
@@ -397,6 +400,8 @@ function build(root: HTMLElement): void {
     else state.errors.binance = msg(x);
     if (s.status === 'fulfilled') state.snapshot = s.value;
     else state.errors.snapshot = msg(s);
+    if (rg.status === 'fulfilled') state.remoteGola = rg.value;
+    else state.errors.gola = msg(rg);
     state.loading = false;
     refreshBtn.disabled = false;
     refreshBtn.textContent = '重新整理';

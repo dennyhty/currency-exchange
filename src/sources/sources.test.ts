@@ -3,7 +3,14 @@ import { fetchBinanceFees, fetchBinanceQuotes, parseCommission, parseQuote } fro
 import { fetchBitopro, parseOrderBook, parseOtc } from './bitopro.ts';
 import { fetchEsun, parseDotNetDate, parseEsun } from './esun.ts';
 import { fakeFetch, fixture } from './fixtures.ts';
-import { parseGolaJson, validateGola } from './golavisa.ts';
+import {
+  buildGolaFile,
+  fetchGolaFile,
+  newerGola,
+  parseGolaFile,
+  parseGolaJson,
+  validateGola,
+} from './golavisa.ts';
 
 describe('bitopro', () => {
   it('reads best ask/bid from the order book', () => {
@@ -160,5 +167,58 @@ describe('golavisa', () => {
     };
     expect(validateGola(ok)).toBe(ok);
     expect(() => validateGola({ ...ok, usdToVnd: 26 })).toThrow(/outside/);
+  });
+});
+
+describe('golavisa published file', () => {
+  const api = fixture('golavisa/exchange-rates.sample.json');
+  const at = new Date('2026-10-08T09:00:00Z');
+
+  it('wraps a validated API response with the fetch time and parses it back as remote', () => {
+    const file = buildGolaFile(api, at);
+    expect(file.fetchedAt).toBe('2026-10-08T09:00:00.000Z');
+    expect(parseGolaFile(file)).toMatchObject({
+      origin: 'remote',
+      twdToVnd: 781,
+      usdToVnd: 25960,
+      enteredAt: at.getTime(),
+    });
+  });
+
+  it('refuses to publish something that is not the API (e.g. a challenge page)', () => {
+    expect(() => buildGolaFile({ error: { code: 'challenge' } })).toThrow();
+    expect(() =>
+      buildGolaFile({ snapshot: { rates: { TWD: { buy_cash: 7, sell: 8 } } } }),
+    ).toThrow();
+  });
+
+  it('rejects a file without a usable fetch time', () => {
+    expect(() => parseGolaFile({ response: api })).toThrow(/fetchedAt/);
+  });
+
+  it('fetchGolaFile returns null on 404 and throws on other errors', async () => {
+    const status = (code: number): typeof fetch =>
+      (async () => new Response('x', { status: code })) as typeof fetch;
+    expect(await fetchGolaFile(status(404))).toBeNull();
+    await expect(fetchGolaFile(status(500))).rejects.toThrow(/500/);
+    const ok = (async () => new Response(JSON.stringify(buildGolaFile(api, at)))) as typeof fetch;
+    expect((await fetchGolaFile(ok))?.origin).toBe('remote');
+  });
+
+  it('newerGola prefers whichever was entered or fetched most recently', () => {
+    const base = {
+      twdToVnd: 781,
+      vndToTwd: 810,
+      usdToVnd: 25960,
+      vndToUsd: 26110,
+      updatedAt: null,
+    };
+    const manual = { ...base, enteredAt: 200 };
+    const remote = { ...base, enteredAt: 100, origin: 'remote' as const };
+    expect(newerGola(manual, remote)).toBe(manual);
+    expect(newerGola(manual, { ...remote, enteredAt: 300 })?.origin).toBe('remote');
+    expect(newerGola(manual, null)).toBe(manual);
+    expect(newerGola(undefined, remote)).toBe(remote);
+    expect(newerGola(undefined, null)).toBeUndefined();
   });
 });

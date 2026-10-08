@@ -74,7 +74,9 @@
 
   探測當天數字：TWD 買 781／賣 810；USD 買 25,960／賣 26,110。與頁面計算機規則一致（TWD、USD 用 Hung Long）。
 - 這是 Gola 前端的內部 API，欄位可能變動；解析要防欄位缺漏，缺了就顯示「資料不足」。
-- 已定案：手動輸入的數字存在該裝置的瀏覽器（localStorage）；使用者自己開網址取數字。輸入框會附「貼上 `/api/exchange-rates` 的 JSON 自動填欄位」輔助。
+- 已定案：手動輸入的數字存在該裝置的瀏覽器（localStorage），輸入框附「貼上 JSON 自動填欄位」輔助。
+- **自動更新（2026-10-08 新增）**：使用者在**自己的電腦**上用 Claude Code ＋ Claude in Chrome，在真人瀏覽器打開 API 網址、讀出 JSON，再執行 `scripts/publish-golavisa.ts`（指令檔 `.claude/commands/update-golavisa.md`，用 `/update-golavisa` 觸發）。腳本先驗證數字，通過才把 `{ fetchedAt, response }` 推到 `data` 分支的 `golavisa.json`；網站讀 `raw.githubusercontent.com/.../data/golavisa.json`（允許跨網域），與手動輸入比較，用較新的那份。檔案不存在或過舊時，自然退回手動輸入。
+- 限制：要使用者的電腦開機且 Chrome 開著；遇到驗證頁時必須由使用者自己完成，不得繞過；一天一次即可。
 
 ## 5. 對架構的影響
 
