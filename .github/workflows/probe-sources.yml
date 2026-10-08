@@ -1,0 +1,53 @@
+# TEMPORARY (Phase 0): fetches each data source from a GitHub-hosted runner and prints
+# what comes back, so the real formats, CORS and blocking behaviour are known.
+# Delete this file (and scripts/probe/) once docs/data-sources.md is written.
+name: probe-sources (temporary)
+
+on:
+  push:
+    branches: [claude/focused-curie-di0jvs]
+    paths:
+      - .github/workflows/probe-sources.yml
+      - scripts/probe/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: probe-sources
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    name: probe (${{ matrix.group }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        group: [bitopro, esun, binance, golavisa]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install playwright-core (driver only, the runner's Chrome is used)
+        working-directory: scripts/probe
+        run: npm install --no-save --no-package-lock playwright-core
+
+      - name: Make sure a Chrome binary exists
+        run: |
+          if ! google-chrome --version; then
+            (cd scripts/probe && npx playwright-core install --with-deps chromium)
+          fi
+
+      - name: Runner egress
+        continue-on-error: true
+        run: node scripts/probe/probe.mjs env
+
+      - name: Probe ${{ matrix.group }}
+        continue-on-error: true
+        run: node scripts/probe/probe.mjs ${{ matrix.group }}

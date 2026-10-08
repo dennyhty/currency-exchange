@@ -1,0 +1,6 @@
+{
+  "name": "probe-sources",
+  "private": true,
+  "type": "module",
+  "description": "Temporary Phase 0 data-source probe. Delete after docs/data-sources.md is written."
+}
