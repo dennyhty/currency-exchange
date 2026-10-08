@@ -40,7 +40,7 @@
  ├ GolaVisa：使用者手動輸入四個匯率與網站標示的更新時間（網站有 Vercel 機器人檢查，不自動抓）
  └ 計算引擎 → 路徑比較 + 最划算標示 + 各來源資料年齡
 
-GitHub Actions（每 5~10 分鐘）→ 抓玉山、Binance 費率 → rates.json → 部署到 GitHub Pages
+GitHub Actions（每天台北時間 09:00）→ 抓玉山、Binance 費率 → rates.json → 部署到 GitHub Pages
 ```
 
 - 全程不需要伺服器、不需要金鑰，也不需要 Cloudflare Worker（三個可抓的來源 GitHub runner 都連得到）。

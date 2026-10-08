@@ -6,9 +6,10 @@ on:
   # Build the Pages artifact on PRs too, so a broken build is caught before merge.
   pull_request:
   workflow_dispatch:
-  # Refresh rates.json (E.SUN, Binance fees, fallback quotes). GitHub may delay or skip runs.
+  # Refresh rates.json (E.SUN, Binance fees, fallback quotes) once a day at 09:00 Taipei (01:00 UTC).
+  # GitHub may start scheduled runs late, especially at the top of the hour.
   schedule:
-    - cron: '4-59/10 * * * *'
+    - cron: '0 1 * * *'
 
 permissions:
   contents: read
