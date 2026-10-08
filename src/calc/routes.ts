@@ -1,9 +1,9 @@
 import type { Direction, Fiat, MarketData, Settings, SourceId } from '../lib/types.ts';
 
 export const DIRECTIONS: Record<Direction, { from: Fiat; to: Fiat; defaultAmount: number }> = {
-  'TWD>VND': { from: 'TWD', to: 'VND', defaultAmount: 30_000 },
+  'TWD>VND': { from: 'TWD', to: 'VND', defaultAmount: 1_000 },
   'VND>TWD': { from: 'VND', to: 'TWD', defaultAmount: 10_000_000 },
-  'CNY>VND': { from: 'CNY', to: 'VND', defaultAmount: 7_000 },
+  'CNY>VND': { from: 'CNY', to: 'VND', defaultAmount: 100 },
   'VND>CNY': { from: 'VND', to: 'CNY', defaultAmount: 10_000_000 },
 };
 
