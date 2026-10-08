@@ -144,7 +144,7 @@ async function launchBrowser() {
 
 /** Load a page in headless Chrome and report every xhr/fetch it makes plus the rendered text. */
 async function capture(label, url, o = {}) {
-  const { textMax = 2500, jsonMax = 1500, settleMs = 6000, grep = [], act } = o;
+  const { textMax = 2500, jsonMax = 1500, settleMs = 6000, grep = [], act, must, only = false } = o;
   out(`\n── [browser] ${label}\n   ${url}`);
   let browser;
   try {
@@ -192,6 +192,13 @@ async function capture(label, url, o = {}) {
     if (act) await act(page);
 
     const rel = seen.filter((r) => r.type === 'document' || !NOISE.test(r.url));
+    // Requests the caller cares about: always print request + full response body.
+    for (const r of must ? rel.filter((x) => must.test(x.url)) : []) {
+      out(`   ★ ${r.method} ${r.status} ${cut(r.url, 200)}`);
+      if (r.post) out(`     request body: ${cut(r.post, 300)}`);
+      out(indent(cut(r.body, 3000), '     | '));
+    }
+    if (only) return;
     out(`   requests (documents + xhr/fetch, noise filtered): ${rel.length} of ${seen.length}`);
     for (const r of rel.slice(0, 40)) {
       out(
@@ -384,7 +391,102 @@ async function selftest() {
   });
 }
 
-const groups = { env, bitopro, esun, binance, golavisa, selftest };
+/** Round 2: follow-ups on what round 1 found. */
+async function round2() {
+  bar('round 2: follow-ups');
+
+  // --- E.SUN: the JSON API the page itself calls (POST, empty body) ---
+  const esunApi = 'https://www.esunbank.com/api/client/ExchangeRate/LastRateInfo?sc_lang=zh-TW';
+  const decode = (s) => {
+    const ms = Number(String(s).match(/-?\d+/)?.[0]);
+    return Number.isFinite(ms) ? new Date(ms).toISOString() : s;
+  };
+  const pickEsun = (j) => {
+    const rates = Array.isArray(j.Rates) ? j.Rates : [];
+    const withTime = (r) => (r ? { ...r, UpdateTimeISO: decode(r.UpdateTime) } : null);
+    return {
+      DiscontFlag: j.DiscontFlag,
+      topLevelKeys: Object.keys(j),
+      count: rates.length,
+      currencies: rates.map((r) => r.CCY),
+      USD: withTime(rates.find((r) => r.CCY === 'USD/TWD')),
+      CNY: withTime(rates.find((r) => r.CCY === 'CNY/TWD')),
+    };
+  };
+  await probe('E.SUN LastRateInfo, POST with browser Origin (CORS view)', esunApi, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', referer: ESUN },
+    body: '',
+    max: 3500,
+    pick: pickEsun,
+  });
+  await probe('E.SUN CORS preflight', esunApi, {
+    method: 'OPTIONS',
+    headers: {
+      'access-control-request-method': 'POST',
+      'access-control-request-headers': 'content-type',
+    },
+    max: 300,
+  });
+  await probe('E.SUN LastRateInfo, POST server-side style (no Origin)', esunApi, {
+    method: 'POST',
+    origin: false,
+    headers: { 'content-type': 'application/json' },
+    body: '',
+    max: 300,
+    pick: (j) => ({ count: j.Rates?.length, usd: j.Rates?.find((r) => r.CCY === 'USD/TWD') }),
+  });
+
+  // --- Binance: fee-rate and quoted-price APIs, first with plain fetch ---
+  const bn = 'https://c2c.binance.com/bapi/c2c';
+  for (const fiat of ['VND', 'CNY']) {
+    await probe(`Binance commission-rate/taker ${fiat} (plain fetch)`, `${bn}/v1/friendly/c2c/commission-rate/taker`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ channel: 'c2c', area: 'express', asset: 'USDT', fiat }),
+      max: 1200,
+    });
+  }
+  for (const side of ['BUY', 'SELL']) {
+    await probe(`Binance quoted-price VND ${side} (plain fetch)`, `${bn}/v2/public/c2c/adv/quoted-price`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ assets: ['USDT'], fiatCurrency: 'VND', tradeType: side, fromUserRole: 'USER' }),
+      max: 1200,
+    });
+  }
+  // ...and the same two calls exactly as the Express pages make them (full bodies).
+  const mustRe = /quoted-price|commission-rate/;
+  await capture('Express sell/USDT/VND: quoted-price + commission-rate bodies', 'https://c2c.binance.com/en/express/sell/USDT/VND', { must: mustRe, only: true });
+  await capture('Express buy/USDT/CNY: quoted-price + commission-rate bodies', 'https://c2c.binance.com/en/express/buy/USDT/CNY', { must: mustRe, only: true });
+
+  // --- BitoPro: full fee schedule structure (taker fees, deposit/withdraw fees) ---
+  const explore = (j) => {
+    const res = {};
+    for (const [k, v] of Object.entries(j)) {
+      if (!Array.isArray(v)) {
+        res[k] = v;
+        continue;
+      }
+      const hits = v.filter((x) => /usdt|twd/i.test(JSON.stringify(x)));
+      res[k] = {
+        count: v.length,
+        sampleKeys: v[0] && typeof v[0] === 'object' ? Object.keys(v[0]) : typeof v[0],
+        matches: (k === 'orderFeesAndLimitations'
+          ? hits.filter((x) => /^usdt\/twd$/i.test(x.pair))
+          : hits
+        ).slice(0, 8),
+      };
+    }
+    return res;
+  };
+  await probe('BitoPro limitations-and-fees: structure + usdt/twd entries', `${B}/provisioning/limitations-and-fees`, {
+    max: 12000,
+    pick: explore,
+  });
+}
+
+const groups = { env, bitopro, esun, binance, golavisa, selftest, round2 };
 const group = process.argv[2];
 if (!groups[group]) {
   console.error(`usage: probe.mjs <${Object.keys(groups).join('|')}>`);
