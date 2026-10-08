@@ -1,0 +1,34 @@
+# TEMPORARY: look for GolaVisa's upstream sources from a GitHub runner (plain requests only;
+# a challenge response is recorded, never worked around). Delete after use.
+name: probe-upstream (temporary)
+on:
+  push:
+    branches: [claude/focused-curie-di0jvs]
+    paths: [.github/workflows/probe-upstream.yml]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: DNS and hosting
+        run: |
+          for h in www.golavisa.co golavisa.co; do echo "== $h"; dig +short "$h" A; dig +short "$h" CNAME; done
+      - name: GolaVisa public files (status + key headers only)
+        run: |
+          for u in https://www.golavisa.co/robots.txt https://www.golavisa.co/sitemap.xml https://golavisa.co/ https://www.golavisa.co/manifest.json https://www.golavisa.co/favicon.ico; do
+            echo "== $u"
+            curl -sS -m 20 -o /tmp/body -D - -A 'Mozilla/5.0' "$u" | grep -iE '^(HTTP|server|content-type|location|x-vercel-mitigated|x-matched-path)' || true
+            head -c 400 /tmp/body | tr '\n' ' '; echo
+          done
+      - name: Vietcombank legacy XML (GolaVisa's bank_rates source)
+        run: |
+          u='https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx'
+          curl -sS -m 30 -o /tmp/vcb.xml -D - -A 'Mozilla/5.0' -H 'Origin: https://dennyhty.github.io' "$u" | grep -iE '^(HTTP|content-type|access-control|location|server)' || true
+          head -c 3000 /tmp/vcb.xml; echo
+      - name: Vietcombank current JSON API
+        run: |
+          u="https://www.vietcombank.com.vn/api/exchangerates?date=$(date -u +%Y-%m-%d)"
+          curl -sS -m 30 -o /tmp/vcb.json -D - -A 'Mozilla/5.0' -H 'Origin: https://dennyhty.github.io' "$u" | grep -iE '^(HTTP|content-type|access-control|location|server)' || true
+          head -c 2500 /tmp/vcb.json; echo
