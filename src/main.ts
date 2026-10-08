@@ -162,18 +162,18 @@ function renderResults(container: HTMLElement): void {
 function renderStatus(container: HTMLElement): void {
   const md = marketData();
   const rows: Array<[SourceId, string]> = [
-    ['bitopro', md.bitopro ? `買 ${md.bitopro.ask}／賣 ${md.bitopro.bid} TWD` : '—'],
+    ['bitopro', md.bitopro ? `USDT 你買／你賣：${md.bitopro.ask}／${md.bitopro.bid} TWD` : '—'],
     [
       'binance',
       md.binance
-        ? `VND 買 ${nf(md.binance.VND.buy, 0)}／賣 ${nf(md.binance.VND.sell, 0)}；CNY 買 ${md.binance.CNY.buy}／賣 ${md.binance.CNY.sell}`
+        ? `USDT 你買／你賣：${nf(md.binance.VND.buy, 0)}／${nf(md.binance.VND.sell, 0)} VND、${md.binance.CNY.buy}／${md.binance.CNY.sell} CNY`
         : '—',
     ],
-    ['esun', md.esun ? `銀行買入 ${md.esun.bankBuy}／賣出 ${md.esun.bankSell} TWD` : '—'],
+    ['esun', md.esun ? `USD 你買／你賣：${md.esun.bankSell}／${md.esun.bankBuy} TWD` : '—'],
     [
       'gola',
       md.gola
-        ? `TWD ${md.gola.twdToVnd}／${md.gola.vndToTwd}；USD ${nf(md.gola.usdToVnd, 0)}／${nf(md.gola.vndToUsd, 0)} VND`
+        ? `1 TWD 換到／要付：${md.gola.twdToVnd}／${md.gola.vndToTwd} VND；1 USD 換到／要付：${nf(md.gola.usdToVnd, 0)}／${nf(md.gola.vndToUsd, 0)} VND`
         : '尚無資料（需執行 /update-golavisa）',
     ],
   ];

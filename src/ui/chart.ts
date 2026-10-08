@@ -101,11 +101,18 @@ export function lineChart(opts: Options): HTMLElement {
     const xAt = (i: number): number => xp[i] ?? M.left;
 
     // grid + y labels
-    for (const t of niceTicks(lo, hi)) {
+    const ticks = niceTicks(lo, hi);
+    // axis labels only need the decimals of the gridline step (808, not 808.00)
+    const step = ticks.length > 1 ? (ticks[1] ?? 0) - (ticks[0] ?? 0) : 1;
+    const tickDigits = String(Number(step.toPrecision(6))).split('.')[1]?.length ?? 0;
+    for (const t of ticks) {
       const y = py(t);
       root.append(svg('line', { x1: M.left, x2: W - M.right, y1: y, y2: y, class: 'grid' }));
       const label = svg('text', { x: M.left - 8, y: y + 4, 'text-anchor': 'end', class: 'axis' });
-      label.textContent = format(t);
+      label.textContent = t.toLocaleString('zh-TW', {
+        minimumFractionDigits: tickDigits,
+        maximumFractionDigits: tickDigits,
+      });
       root.append(label);
     }
     // x labels: first and last day (one label when there is a single day)
