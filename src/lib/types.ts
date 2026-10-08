@@ -47,7 +47,10 @@ export interface GolaRates {
   vndToUsd: number;
   /** Update time shown by the site (epoch ms), null if unknown. */
   updatedAt: number | null;
+  /** When the numbers were entered by hand, or fetched by the local publisher (epoch ms). */
   enteredAt: number;
+  /** Where they came from. Missing means typed in by hand. */
+  origin?: 'manual' | 'remote';
 }
 
 export type Marked<T> = T & { stale?: boolean };
