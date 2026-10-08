@@ -5,3 +5,5 @@ coverage/
 .env.*
 *.log
 .DS_Store
+public/rates.json
+previous-rates.json

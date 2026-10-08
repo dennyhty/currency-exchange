@@ -33,10 +33,10 @@
 
 | Phase | 內容 | 狀態 |
 |---|---|---|
-| 0 | 資料來源探測（決定架構） | ✅ 完成（GolaVisa 待使用者貼頁面內容） |
-| 1 | 骨架、GitHub 管控、空殼上線 | 🚧 程式與 workflow 完成；待使用者啟用 Pages、合併 PR 後上線 |
-| 2 | 抓取層（玉山、Binance 費率 + 瀏覽器端 BitoPro／Binance） | ⏳ 未開始 |
-| 3 | 計算引擎與畫面（含 GolaVisa 貼上解析） | ⏳ 未開始 |
+| 0 | 資料來源探測（決定架構） | ✅ 完成（GolaVisa：決定手動輸入） |
+| 1 | 骨架、GitHub 管控、空殼上線 | ✅ 完成（Pages 已部署、`main` 保護已驗證，PR #1 已合併） |
+| 2 | 抓取層（玉山、Binance 費率 + 瀏覽器端 BitoPro／Binance） | 🚧 程式與測試完成；排程要合併到 `main` 後才會跑，尚待在 runner 上實測 |
+| 3 | 計算引擎與畫面（含 GolaVisa 手動輸入） | 🚧 完成並用真實回應範例在瀏覽器驗證；待 PR 合併上線 |
 | 4 | 選配（走勢、通知、PWA…） | ⏳ 未開始 |
 
 狀態圖例：⏳ 未開始｜🚧 進行中｜✅ 完成｜⛔ 受阻
@@ -48,11 +48,13 @@
 - [x] 2026-10-08　Phase 0 探測完成：`docs/data-sources.md`、`fixtures/`
 - [x] 2026-10-08　Phase 1 骨架：Vite + TS + Vitest、ESLint/Prettier、CI、Pages 部署 workflow、Dependabot、PR 範本
 
+- [x] 2026-10-08　Phase 2/3 程式：`src/sources/`（4 個 adapter）、`src/calc/routes.ts`（6 條路徑＋直換）、`src/lib/`（快照合併、新鮮度、儲存）、`scripts/fetch-snapshot.ts`、畫面（方向／金額／路徑卡片／資料狀態／GolaVisa 手動輸入／設定）；54 個單元測試
+
 ### 下一步
 
-1. 使用者：貼 GolaVisa 頁面文字；啟用 Pages（Source＝GitHub Actions）；設 `main` 保護；合併 PR。
-2. Phase 2：`src/sources/` 的 adapter（BitoPro、Binance 瀏覽器端；玉山、Binance 費率 Node 端），用 `fixtures/` 寫測試；排程 workflow。
-3. Phase 3：計算引擎（PLAN §4）與畫面。
+1. 開 PR → CI 通過（PR 上的 build 會在 runner 實跑 `fetch-snapshot`，驗證玉山與 Binance 費率）→ 合併上線。
+2. 合併後確認：排程有跑（Actions 的 schedule）、網站 `rates.json` 有更新、手機實測。
+3. 玉山非營業時間／週末的 `UpdateTime` 行為待觀察；之後視需要做 Phase 4（走勢、通知、PWA）。
 
 ### 待使用者決定
 
@@ -60,12 +62,17 @@
 
 ### 阻礙
 
-- GolaVisa 無法自動抓（Vercel 檢查站），等使用者提供頁面樣本。
+- GolaVisa 無法自動抓（頁面與 `/api/exchange-rates` 都被 Vercel 檢查站擋）。決定：面板提供手動輸入（四個匯率＋網站更新時間）。
 
 ## 工作紀錄（最新在上）
 
 每次 1–3 行；太長時把舊紀錄移到 `docs/` 下歸檔。
 
+- **2026-10-08**　使用者決定排程一天一次（台北 09:00，cron `0 1 * * *`）；玉山數字最多約 24 小時舊，新鮮度門檻調成 6 小時警示／36 小時過期。
+- **2026-10-08**　Phase 2/3 一次做完：adapter＋公式引擎＋畫面＋排程快照。預設值：BitoPro 掛單簿（設定可切一鍵買賣）、只計 Binance VND 0.1%（BitoPro 手續費可自填）。數字用手算案例鎖住買賣方向。
+- **2026-10-08**　GolaVisa 手動輸入存在瀏覽器（localStorage），並附貼上 JSON 輔助。
+- **2026-10-08**　使用者決定 GolaVisa（TWD／USD ⇄ VND）改為手動輸入，不做排程抓取；已更新 PLAN、data-sources、本檔。
+- **2026-10-08**　Phase 1 上線（Pages 部署成功、直接推 `main` 會被擋）。GolaVisa 的 JSON API 由使用者查到，從 runner 仍被 Vercel 擋，改採貼上 JSON；欄位對應寫入 `docs/data-sources.md` §4。
 - **2026-10-08**　Phase 0 + 1：探測四個來源（BitoPro、Binance 價格皆 CORS 開放；玉山有 JSON 但無 CORS；GolaVisa 被 Vercel 擋）；建 Vite/TS 骨架與 CI/Pages workflow；移除 probe。
 - **2026-10-08**　規劃階段。確認 repo 為 public；四個來源網域在雲端 session 皆被擋（403），改以文件／搜尋整理來源資訊（未驗證）；產出 `docs/PLAN.md` 與本檔。尚無程式碼。
 

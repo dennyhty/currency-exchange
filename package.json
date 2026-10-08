@@ -11,6 +11,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "snapshot": "node scripts/fetch-snapshot.ts --out public/rates.json",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
