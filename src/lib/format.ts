@@ -32,3 +32,15 @@ export function formatAge(from: TimeInput, now: TimeInput = Date.now()): string 
   if (hours < 24) return `${hours} 小時前`;
   return `${Math.floor(hours / 24)} 天前`;
 }
+
+/** epoch ms → "2026-10-08T16:30" for a datetime-local input, in Taipei time. */
+export function toTaipeiInput(ms: number): string {
+  return formatTaipeiTime(ms).replace(' ', 'T');
+}
+
+/** "2026-10-08T16:30" typed as Taipei time → epoch ms, or null if invalid. */
+export function fromTaipeiInput(value: string): number | null {
+  if (!/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(value)) return null;
+  const ms = Date.parse(`${value}:00+08:00`);
+  return Number.isNaN(ms) ? null : ms;
+}

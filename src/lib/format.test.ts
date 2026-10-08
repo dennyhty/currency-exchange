@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatAge, formatTaipeiTime } from './format';
+import { formatAge, formatTaipeiTime, fromTaipeiInput, toTaipeiInput } from './format.ts';
 
 describe('formatTaipeiTime', () => {
   it('converts UTC to Asia/Taipei (UTC+8)', () => {
@@ -42,5 +42,18 @@ describe('formatAge', () => {
 
   it('returns a dash for invalid input', () => {
     expect(formatAge('nope', now)).toBe('—');
+  });
+});
+
+describe('Taipei datetime-local helpers', () => {
+  it('round-trips', () => {
+    const ms = Date.parse('2026-10-08T08:30:00Z');
+    expect(toTaipeiInput(ms)).toBe('2026-10-08T16:30');
+    expect(fromTaipeiInput('2026-10-08T16:30')).toBe(ms);
+  });
+
+  it('rejects malformed input', () => {
+    expect(fromTaipeiInput('')).toBeNull();
+    expect(fromTaipeiInput('2026-13-40T99:99')).toBeNull();
   });
 });

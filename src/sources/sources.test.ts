@@ -1,0 +1,164 @@
+import { describe, expect, it } from 'vitest';
+import { fetchBinanceFees, fetchBinanceQuotes, parseCommission, parseQuote } from './binance.ts';
+import { fetchBitopro, parseOrderBook, parseOtc } from './bitopro.ts';
+import { fetchEsun, parseDotNetDate, parseEsun } from './esun.ts';
+import { fakeFetch, fixture } from './fixtures.ts';
+import { parseGolaJson, validateGola } from './golavisa.ts';
+
+describe('bitopro', () => {
+  it('reads best ask/bid from the order book', () => {
+    expect(parseOrderBook(fixture('bitopro/order-book-usdt_twd.json'))).toEqual({
+      ask: 31.988,
+      bid: 31.978,
+    });
+  });
+
+  it('reads one-click quotes (buy is what you pay, sell what you get)', () => {
+    expect(parseOtc(fixture('bitopro/otc-price-usdt.json'))).toEqual({
+      buy: 32.118964,
+      sell: 31.849092,
+    });
+  });
+
+  it('rejects a crossed book and implausible prices', () => {
+    expect(() => parseOrderBook({ asks: [{ price: '31' }], bids: [{ price: '32' }] })).toThrow(
+      /crossed/,
+    );
+    expect(() =>
+      parseOrderBook({ asks: [{ price: '3198.8' }], bids: [{ price: '3197.8' }] }),
+    ).toThrow(/outside/);
+    expect(() => parseOrderBook({})).toThrow();
+  });
+
+  it('fetchBitopro combines both endpoints and tolerates a failing OTC endpoint', async () => {
+    const book = fixture('bitopro/order-book-usdt_twd.json');
+    const all = await fetchBitopro(
+      fakeFetch([
+        ['order-book', book],
+        ['price/otc', fixture('bitopro/otc-price-usdt.json')],
+      ]),
+      1000,
+    );
+    expect(all).toMatchObject({ ask: 31.988, bid: 31.978, otcBuy: 32.118964, fetchedAt: 1000 });
+    const noOtc = await fetchBitopro(fakeFetch([['order-book', book]]), 1000);
+    expect(noOtc).toMatchObject({ ask: 31.988, otcBuy: null, otcSell: null });
+    await expect(fetchBitopro(fakeFetch([]))).rejects.toThrow();
+  });
+});
+
+describe('esun', () => {
+  it('reads USD/TWD spot buy/sell (not cash, not e-banking promo) and the update time', () => {
+    const r = parseEsun(fixture('esun/last-rate-info.trimmed.json'), 5);
+    expect(r).toEqual({
+      fetchedAt: 5,
+      sourceUpdatedAt: 1791448520000,
+      bankBuy: 31.85,
+      bankSell: 31.95,
+    });
+  });
+
+  it('parses .NET dates', () => {
+    expect(parseDotNetDate('/Date(1791448520000)/')).toBe(1791448520000);
+    expect(parseDotNetDate('2026-10-08')).toBeNull();
+    expect(parseDotNetDate(undefined)).toBeNull();
+  });
+
+  it('fails loudly when USD is missing or inverted', () => {
+    expect(() => parseEsun({ Rates: [] }, 0)).toThrow(/not found/);
+    expect(() => parseEsun({}, 0)).toThrow();
+    expect(() =>
+      parseEsun({ Rates: [{ CCY: 'USD/TWD', BBoardRate: 32, SBoardRate: 31 }] }, 0),
+    ).toThrow(/above sell/);
+  });
+
+  it('fetchEsun posts and parses', async () => {
+    const r = await fetchEsun(
+      fakeFetch([['LastRateInfo', fixture('esun/last-rate-info.trimmed.json')]]),
+      9,
+    );
+    expect(r.bankSell).toBe(31.95);
+  });
+});
+
+describe('binance', () => {
+  it('reads Express estimated prices', () => {
+    expect(parseQuote(fixture('binance/quote-price-vnd-buy.json'), 'VND')).toBe(25986);
+    expect(parseQuote(fixture('binance/quote-price-vnd-sell.json'), 'VND')).toBe(26162);
+    expect(parseQuote(fixture('binance/quote-price-cny-buy.json'), 'CNY')).toBe(6.65);
+    expect(parseQuote(fixture('binance/quote-price-cny-sell.json'), 'CNY')).toBe(6.67);
+  });
+
+  it('rejects unsuccessful or implausible responses', () => {
+    expect(() => parseQuote({ success: false }, 'VND')).toThrow();
+    expect(() => parseQuote({ success: true, data: { price: 26 } }, 'VND')).toThrow(/outside/);
+  });
+
+  it('reads taker fees as fractions', () => {
+    expect(parseCommission(fixture('binance/commission-rate-taker-vnd.json'))).toEqual({
+      buy: 0.001,
+      sell: 0.001,
+    });
+    expect(parseCommission(fixture('binance/commission-rate-taker-cny.json'))).toEqual({
+      buy: 0,
+      sell: 0,
+    });
+  });
+
+  it('fetches all four quotes, using the right tradeType for each side', async () => {
+    const seen: string[] = [];
+    const f = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      seen.push(url);
+      const fiat = url.includes('fiat=VND') ? 'vnd' : 'cny';
+      const side = url.includes('tradeType=BUY') ? 'buy' : 'sell';
+      return new Response(JSON.stringify(fixture(`binance/quote-price-${fiat}-${side}.json`)));
+    }) as typeof fetch;
+    const r = await fetchBinanceQuotes(f, 7);
+    expect(r).toMatchObject({ VND: { buy: 25986, sell: 26162 }, CNY: { buy: 6.65, sell: 6.67 } });
+    expect(seen).toHaveLength(4);
+  });
+
+  it('fetches fees for both fiats', async () => {
+    const f = (async (_: RequestInfo | URL, init?: RequestInit) => {
+      const fiat = String(init?.body).includes('"VND"') ? 'vnd' : 'cny';
+      return new Response(JSON.stringify(fixture(`binance/commission-rate-taker-${fiat}.json`)));
+    }) as typeof fetch;
+    const r = await fetchBinanceFees(f, 7);
+    expect(r.VND.sell).toBe(0.001);
+    expect(r.CNY.sell).toBe(0);
+  });
+});
+
+describe('golavisa', () => {
+  it('maps the API fields: TWD/USD → VND is buy_cash, VND → TWD/USD is sell', () => {
+    const g = parseGolaJson(fixture('golavisa/exchange-rates.sample.json'), 42);
+    expect(g).toEqual({
+      twdToVnd: 781,
+      vndToTwd: 810,
+      usdToVnd: 25960,
+      vndToUsd: 26110,
+      updatedAt: Date.parse('2026-10-08T03:06:08.810039+00:00'),
+      enteredAt: 42,
+    });
+  });
+
+  it('accepts the JSON as text and rejects missing fields', () => {
+    const text = JSON.stringify(fixture('golavisa/exchange-rates.sample.json'));
+    expect(parseGolaJson(text).usdToVnd).toBe(25960);
+    expect(() => parseGolaJson({ snapshot: { rates: {} } })).toThrow();
+    expect(() => parseGolaJson('not json')).toThrow();
+  });
+
+  it('validates typed numbers', () => {
+    const ok = {
+      twdToVnd: 781,
+      vndToTwd: 810,
+      usdToVnd: 25960,
+      vndToUsd: 26110,
+      updatedAt: null,
+      enteredAt: 1,
+    };
+    expect(validateGola(ok)).toBe(ok);
+    expect(() => validateGola({ ...ok, usdToVnd: 26 })).toThrow(/outside/);
+  });
+});

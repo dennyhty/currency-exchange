@@ -6,6 +6,9 @@ on:
   # Build the Pages artifact on PRs too, so a broken build is caught before merge.
   pull_request:
   workflow_dispatch:
+  # Refresh rates.json (E.SUN, Binance fees, fallback quotes). GitHub may delay or skip runs.
+  schedule:
+    - cron: '4-59/10 * * * *'
 
 permissions:
   contents: read
@@ -30,6 +33,13 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      # Keep the last good values when a source is down: start from the currently published file.
+      - name: Fetch previous rates.json
+        run: curl -fsS -m 20 -o previous-rates.json "https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/rates.json" || echo "no previous snapshot"
+      - name: Fetch rates
+        run: node scripts/fetch-snapshot.ts --out public/rates.json --prev previous-rates.json
+
       - run: npm run build
 
       - uses: actions/upload-pages-artifact@v5
@@ -41,9 +51,22 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      actions: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
+
+      # Scheduled workflows in a public repo are disabled after 60 days without activity;
+      # re-enabling ourselves is a best-effort keepalive.
+      - name: Keepalive
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow enable deploy.yml --repo "$GITHUB_REPOSITORY" || true
