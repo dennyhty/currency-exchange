@@ -50,6 +50,29 @@ export function golaForHistory(g: GolaRates | null | undefined, at: number): His
   return { twdToVnd, vndToTwd, usdToVnd, vndToUsd, updatedAt };
 }
 
+function median(xs: readonly number[]): number {
+  const s = [...xs].sort((a, b) => a - b);
+  // Same index for an odd count; the middle two for an even one.
+  const lo = s[(s.length - 1) >> 1] ?? NaN;
+  const hi = s[s.length >> 1] ?? NaN;
+  return (lo + hi) / 2;
+}
+
+/**
+ * Per-quote median of several Binance samples taken a few seconds apart. One Express quote can be a
+ * momentary spike (2026-10-09: VND sell 26,789 vs ~26,200 minutes later); the median damps it.
+ */
+export function medianBinance(
+  samples: readonly NonNullable<HistoryEntry['binance']>[],
+): HistoryEntry['binance'] {
+  if (samples.length === 0) return null;
+  const q = (fiat: 'VND' | 'CNY'): FiatQuote => ({
+    buy: median(samples.map((s) => s[fiat].buy)),
+    sell: median(samples.map((s) => s[fiat].sell)),
+  });
+  return { VND: q('VND'), CNY: q('CNY') };
+}
+
 /** Add or replace the entry for its day; keep entries sorted by date and capped. */
 export function appendEntry(file: HistoryFile | null, entry: HistoryEntry): HistoryFile {
   const entries = (file?.entries ?? []).filter((e) => e.date !== entry.date);

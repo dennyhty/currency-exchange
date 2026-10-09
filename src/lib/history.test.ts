@@ -5,6 +5,7 @@ import {
   entryMarketData,
   golaForHistory,
   historySeries,
+  medianBinance,
   parseHistory,
   taipeiDate,
   unitRates,
@@ -132,5 +133,29 @@ describe('historySeries', () => {
 
   it('is empty for no entries', () => {
     expect(historySeries([], 'CNY>VND')).toEqual({ series: [], points: [] });
+  });
+});
+
+describe('medianBinance', () => {
+  const s = (vndSell: number, cnyBuy = 6.65) => ({
+    VND: { buy: 26_100, sell: vndSell },
+    CNY: { buy: cnyBuy, sell: 6.67 },
+  });
+
+  it('drops a one-off spike (odd sample count)', () => {
+    expect(medianBinance([s(26_200), s(26_789), s(26_190), s(26_210), s(26_198)])).toEqual(
+      s(26_200),
+    );
+  });
+
+  it('averages the middle two for an even count, per quote', () => {
+    const m = medianBinance([s(26_000, 6.6), s(26_400, 6.7)]);
+    expect(m?.VND.sell).toBe(26_200);
+    expect(m?.CNY.buy).toBeCloseTo(6.65);
+    expect(m?.VND.buy).toBe(26_100);
+  });
+
+  it('is null without samples', () => {
+    expect(medianBinance([])).toBeNull();
   });
 });
