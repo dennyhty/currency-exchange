@@ -69,7 +69,9 @@
 
 每次 1–3 行；太長時把舊紀錄移到 `docs/` 下歸檔。
 
+- **2026-10-09**　10/09 歷史紀錄的經 USDT 跳到 833（Binance Express VND 賣價瞬間 26,789，數分鐘後回到約 26,200）。使用者決定只做「多抽樣取中位數」：排程抓 Binance 5 次、間隔 30 秒，每個報價各取中位數（`medianBinance`）；失敗的樣本略過，全失敗才記 null。不另加價差門檻。
 - **2026-10-08**　畫面小修（使用者挑選）：路徑卡片數字加千分位；「資料來源」改用「你買／你賣」「換到／要付」標示角度；走勢圖縱軸只顯示格線間距需要的小數位（提示框與表格仍兩位）；期間按鈕加大到至少 44×40px。
+- **2026-10-08**　在使用者 Mac 的 Claude 桌面 app 建立排程任務 `update-golavisa-daily`（本地時區每天 09:00，實際約 09:14），自動執行 `/update-golavisa`。任務存在 `~/.claude/scheduled-tasks/`，不在 repo 內；app 須開著（關閉則下次開啟補跑），首次需按「Run now」預先核准權限；遇 Security Checkpoint 會停下回報。
 - **2026-10-08**　使用者決定移除畫面上的「GolaVisa 匯率（手動輸入）」與「設定」兩張卡片：GolaVisa 只讀 `data` 分支的 `golavisa.json`（`/update-golavisa`）；BitoPro 價格／手續費固定用 `DEFAULT_SETTINGS`（掛單簿、0%）。刪除 `src/lib/storage.ts`；`newerGola`、`parseGolaJson` 等函式與測試保留。
 - **2026-10-08**　在使用者 Mac 實測 `/update-golavisa` 成功：Claude in Chrome 讀 API → `publish-golavisa.ts` 建立 `data` 分支並推送 `golavisa.json`（raw URL 約 1 分鐘後可讀）。本機已裝 Homebrew、Node 22、gh 並登入；腳本在暫存 clone 內 commit，不吃 repo 的 git 設定，需全域 `user.name`／`user.email` 或 `GIT_AUTHOR_*`／`GIT_COMMITTER_*` 環境變數。
 - **2026-10-08**　Phase 4 歷史走勢：排程（台北 09:00）的 `history` job 抓玉山、BitoPro、Binance，連同 72 小時內的 `golavisa.json`，寫進 `data` 分支 `history.json`（每天一筆）；網站依目前設定重算各路徑每單位匯率畫折線圖（30／90 天／全部、表格檢視）。使用者決定**先不做通知**：排程讀不到手動輸入的 GolaVisa，最佳路徑改變的通知目前不會觸發。
