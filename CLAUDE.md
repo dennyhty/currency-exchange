@@ -28,6 +28,7 @@
 - Claude 雲端 session 的網路政策擋住四個來源網域（CONNECT 403），WebFetch 也一樣。要測外部來源：推一次性的 probe workflow（push 觸發），讀 GitHub Actions 日誌（`get_job_logs`；日誌大時會存成檔案，用 python 解碼）。Phase 0 就是這樣做的，結果在 `docs/data-sources.md`。
 - GolaVisa 有 Vercel 機器人檢查，不繞過。只有使用者電腦上的真人瀏覽器能讀；在那邊用 `/update-golavisa`（`.claude/commands/update-golavisa.md`）→ `scripts/publish-golavisa.ts` 推到 `data` 分支。`data` 分支沒有保護規則，只放 `golavisa.json` 與 `history.json`（排程每天寫入的歷史匯率），不要合進 `main`。
 - Repo 設定（Pages Source、branch protection）Claude 無法操作，需使用者在 GitHub 網頁設定。
+- 資料存放決策：維持 git `data` 分支＋`raw.githubusercontent.com` 讀取，不改用資料庫（規模小、免金鑰、有變更紀錄）。已知代價：raw 有約 5 分鐘 CDN 快取；兩個寫入方（排程、使用者 Mac）推送衝突靠 rebase 重試；Mac 的 `gh` 憑證可寫整個 repo；公開 repo 60 天無活動時排程會被停用（歷史圖斷掉時先查 Actions）。改用 Cloudflare D1＋Worker 之類的時機：需要分鐘級資料、多人寫入、查詢或推播通知。
 
 ## 開發進度
 
@@ -69,6 +70,7 @@
 
 每次 1–3 行；太長時把舊紀錄移到 `docs/` 下歸檔。
 
+- **2026-10-12**　檢討資料存放方式：使用者決定維持 git `data` 分支，不換資料庫（理由與代價見「已知限制」）。可選改進：Mac 改用只限本 repo Contents 權限的 fine-grained PAT。
 - **2026-10-09**　10/09 歷史紀錄的經 USDT 跳到 833（Binance Express VND 賣價瞬間 26,789，數分鐘後回到約 26,200）。使用者決定只做「多抽樣取中位數」：排程抓 Binance 5 次、間隔 30 秒，每個報價各取中位數（`medianBinance`）；失敗的樣本略過，全失敗才記 null。不另加價差門檻。
 - **2026-10-08**　畫面小修（使用者挑選）：路徑卡片數字加千分位；「資料來源」改用「你買／你賣」「換到／要付」標示角度；走勢圖縱軸只顯示格線間距需要的小數位（提示框與表格仍兩位）；期間按鈕加大到至少 44×40px。
 - **2026-10-08**　在使用者 Mac 的 Claude 桌面 app 建立排程任務 `update-golavisa-daily`（本地時區每天 09:00，實際約 09:14），自動執行 `/update-golavisa`。任務存在 `~/.claude/scheduled-tasks/`，不在 repo 內；app 須開著（關閉則下次開啟補跑），首次需按「Run now」預先核准權限；遇 Security Checkpoint 會停下回報。
