@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-10-09T02:46:21.454Z",
+  "fetchedAt": "2026-10-11T16:30:13.044Z",
   "response": {
     "snapshot": {
       "rates": {
@@ -16,54 +16,54 @@
       },
       "bank_rates": {
         "AUD": {
-          "sell": 18360,
-          "buy_cash": 17612,
-          "buy_transfer": 17789
+          "sell": 18357,
+          "buy_cash": 17609,
+          "buy_transfer": 17787
         },
         "CAD": {
-          "sell": 18509,
-          "buy_cash": 17755,
-          "buy_transfer": 17934
+          "sell": 18507,
+          "buy_cash": 17753,
+          "buy_transfer": 17932
         },
         "CNY": {
-          "sell": 3937,
-          "buy_cash": 3777,
-          "buy_transfer": 3815
+          "sell": 3927,
+          "buy_cash": 3767,
+          "buy_transfer": 3805
         },
         "EUR": {
-          "sell": 29845,
-          "buy_cash": 28350,
-          "buy_transfer": 28637
+          "sell": 29826,
+          "buy_cash": 28332,
+          "buy_transfer": 28618
         },
         "GBP": {
-          "sell": 34859,
-          "buy_cash": 33438,
-          "buy_transfer": 33776
+          "sell": 34822,
+          "buy_cash": 33403,
+          "buy_transfer": 33740
         },
         "HKD": {
-          "sell": 3374,
-          "buy_cash": 3217,
-          "buy_transfer": 3250
+          "sell": 3361,
+          "buy_cash": 3205,
+          "buy_transfer": 3237
         },
         "JPY": {
-          "sell": 169,
-          "buy_cash": 159,
-          "buy_transfer": 160
+          "sell": 168,
+          "buy_cash": 158,
+          "buy_transfer": 159
         },
         "KRW": {
-          "sell": 20.24,
-          "buy_cash": 16.79,
-          "buy_transfer": 18.65
+          "sell": 20.12,
+          "buy_cash": 16.69,
+          "buy_transfer": 18.54
         },
         "MYR": {
-          "sell": 6431,
-          "buy_cash": 6294,
-          "buy_transfer": 6294
+          "sell": 6404,
+          "buy_cash": 6268,
+          "buy_transfer": 6268
         },
         "SGD": {
-          "sell": 20656,
-          "buy_cash": 19775,
-          "buy_transfer": 19974
+          "sell": 20579,
+          "buy_cash": 19702,
+          "buy_transfer": 19901
         },
         "THB": {
           "sell": 789,
@@ -71,17 +71,17 @@
           "buy_transfer": 757
         },
         "USD": {
-          "sell": 26170,
-          "buy_cash": 25760,
-          "buy_transfer": 25790
+          "sell": 26070,
+          "buy_cash": 25660,
+          "buy_transfer": 25690
         }
       },
       "source": "vietcombank",
       "source_url": "https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx",
       "note": null,
-      "updated_at": "2026-10-08T03:40:56.810248+00:00",
+      "updated_at": "2026-10-11T03:40:57.488544+00:00",
       "hung_long_updated_at": "2026-10-08T03:06:08.810039+00:00",
-      "bank_updated_at": "2026-10-08T03:40:56.810248+00:00",
+      "bank_updated_at": "2026-10-11T03:40:57.488544+00:00",
       "updated_by_name": "cron_vietcombank"
     },
     "shops": [
