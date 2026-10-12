@@ -73,6 +73,11 @@ export function medianBinance(
   return { VND: q('VND'), CNY: q('CNY') };
 }
 
+/** Whether the file already holds an entry for this Taipei day. */
+export function hasEntry(file: HistoryFile | null, date: string): boolean {
+  return file?.entries.some((e) => e.date === date) ?? false;
+}
+
 /** Add or replace the entry for its day; keep entries sorted by date and capped. */
 export function appendEntry(file: HistoryFile | null, entry: HistoryEntry): HistoryFile {
   const entries = (file?.entries ?? []).filter((e) => e.date !== entry.date);

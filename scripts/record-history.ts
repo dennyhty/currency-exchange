@@ -2,7 +2,9 @@
 // `data` branch (the workflow checks that branch out and commits the file). GolaVisa is taken from the
 // published golavisa.json next to it, only while it is fresh. A source that fails is recorded as null.
 // Binance is sampled several times and the median kept, since a single Express quote can spike.
-// usage: node scripts/record-history.ts --file data-branch/history.json [--gola data-branch/golavisa.json]
+// --keep-existing leaves an existing entry for today alone (scheduled runs often start hours late and
+// would otherwise replace a morning run); without it a re-run replaces today's entry.
+// usage: node scripts/record-history.ts --file data-branch/history.json [--gola data-branch/golavisa.json] [--keep-existing]
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -10,6 +12,7 @@ import { parseArgs } from 'node:util';
 import {
   appendEntry,
   golaForHistory,
+  hasEntry,
   medianBinance,
   parseHistory,
   taipeiDate,
@@ -21,9 +24,17 @@ import { fetchBitopro } from '../src/sources/bitopro.ts';
 import { fetchEsun } from '../src/sources/esun.ts';
 import { parseGolaFile } from '../src/sources/golavisa.ts';
 
-const { values } = parseArgs({ options: { file: { type: 'string' }, gola: { type: 'string' } } });
+const { values } = parseArgs({
+  options: {
+    file: { type: 'string' },
+    gola: { type: 'string' },
+    'keep-existing': { type: 'boolean' },
+  },
+});
 if (!values.file) {
-  console.error('usage: record-history.ts --file <history.json> [--gola <golavisa.json>]');
+  console.error(
+    'usage: record-history.ts --file <history.json> [--gola <golavisa.json>] [--keep-existing]',
+  );
   process.exit(2);
 }
 
@@ -67,6 +78,10 @@ try {
 }
 
 const at = Date.now();
+if (values['keep-existing'] && hasEntry(file, taipeiDate(at))) {
+  console.log(`${taipeiDate(at)} is already recorded: keeping it`);
+  process.exit(0);
+}
 const [esun, bitopro, binance] = await Promise.all([
   attempt('esun', () => fetchEsun()),
   attempt('bitopro', () => fetchBitopro()),

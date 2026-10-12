@@ -4,6 +4,7 @@ import {
   appendEntry,
   entryMarketData,
   golaForHistory,
+  hasEntry,
   historySeries,
   medianBinance,
   parseHistory,
@@ -30,6 +31,15 @@ describe('taipeiDate', () => {
   it('uses the Taipei calendar day', () => {
     expect(taipeiDate(Date.parse('2026-10-08T15:59:00Z'))).toBe('2026-10-08');
     expect(taipeiDate(Date.parse('2026-10-08T16:00:00Z'))).toBe('2026-10-09');
+  });
+});
+
+describe('hasEntry', () => {
+  it('finds a day only when the file has it', () => {
+    const f = appendEntry(null, entry('2026-10-09'));
+    expect(hasEntry(f, '2026-10-09')).toBe(true);
+    expect(hasEntry(f, '2026-10-10')).toBe(false);
+    expect(hasEntry(null, '2026-10-09')).toBe(false);
   });
 });
 
