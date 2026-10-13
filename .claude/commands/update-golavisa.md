@@ -12,7 +12,8 @@ extension. The site `golavisa.co` blocks automated clients, so only the user's r
    user to complete it themselves in that tab, then continue. Never try to get around it.
 3. Save the JSON text, exactly as shown, to a temporary file (for example `/tmp/golavisa.json`).
 4. Run `node scripts/publish-golavisa.ts /tmp/golavisa.json`. It validates the numbers first and only then
-   pushes `golavisa.json` to the `data` branch. If it reports an error, show it to the user and stop.
+   pushes `golavisa.json` to the `data` branch, then asks GitHub (via `gh`) to run the Deploy workflow
+   so E.SUN and today's history refresh right away. If it reports an error, show it to the user and stop.
 5. Report the line it printed (the rates and the site's update time). Delete the temporary file.
 
 Once a day is enough: Hung Long updates about once per working day. Do not loop or poll.

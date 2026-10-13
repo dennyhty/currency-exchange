@@ -1,6 +1,8 @@
 // Run on YOUR computer (not on GitHub): publish the GolaVisa API response that you read in your own
 // browser to the `data` branch, where the site picks it up.
-// usage: node scripts/publish-golavisa.ts <file-with-the-api-json> [--remote <git remote name or url>]
+// usage: node scripts/publish-golavisa.ts <file-with-the-api-json> [--remote <git remote name or url>] [--no-deploy]
+// After publishing it asks GitHub to run the Deploy workflow (needs `gh`), so E.SUN and today's history
+// are refreshed right away instead of waiting for GitHub's scheduled run, which often starts hours late.
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -10,11 +12,16 @@ import { buildGolaFile, parseGolaFile } from '../src/sources/golavisa.ts';
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
-  options: { remote: { type: 'string', default: 'origin' } },
+  options: {
+    remote: { type: 'string', default: 'origin' },
+    'no-deploy': { type: 'boolean', default: false },
+  },
 });
 const input = positionals[0];
 if (!input) {
-  console.error('usage: publish-golavisa.ts <file-with-api-json> [--remote <name|url>]');
+  console.error(
+    'usage: publish-golavisa.ts <file-with-api-json> [--remote <name|url>] [--no-deploy]',
+  );
   process.exit(2);
 }
 
@@ -78,4 +85,19 @@ try {
   console.log('published to the `data` branch. The site reads it within a few minutes.');
 } finally {
   rmSync(work, { recursive: true, force: true });
+}
+
+// 3. best effort: refresh the site now (E.SUN rates.json + today's history entry with these GolaVisa rates)
+if (!values['no-deploy']) {
+  try {
+    execFileSync('gh', ['workflow', 'run', 'deploy.yml', '--ref', 'main'], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    console.log(
+      'asked GitHub to run the Deploy workflow (E.SUN and history refresh in a few minutes).',
+    );
+  } catch (e) {
+    const msg = e instanceof Error ? e.message.split('\n')[0] : String(e);
+    console.log(`could not start the Deploy workflow (${msg}); the daily schedule will still run.`);
+  }
 }
