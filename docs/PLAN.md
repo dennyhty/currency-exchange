@@ -37,7 +37,7 @@
 瀏覽器（手機／電腦）→ https://dennyhty.github.io/currency-exchange/
  ├ 即時直接抓：BitoPro 掛單簿、Binance Express 預估價（兩者都允許跨網域）
  ├ 讀 rates.json（隨網站發佈）：玉山即期匯率；Binance 手續費固定寫在程式裡（VND 0.1%、CNY 0）
- ├ GolaVisa：手動輸入，或由使用者電腦上的 Claude Code＋Chrome 讀取後推到 `data` 分支（網站有 Vercel 機器人檢查，GitHub 排程抓不到）；用較新的一份
+ ├ GolaVisa：手動輸入，或由使用者電腦上的 Claude 桌面 app 內建瀏覽器讀取後推到 `data` 分支（網站有 Vercel 機器人檢查，GitHub 排程抓不到）；用較新的一份
  └ 計算引擎 → 路徑比較 + 最划算標示 + 各來源資料年齡
 
 GitHub Actions（每天台北時間 09:00）→ 只抓玉山 → rates.json → 部署到 GitHub Pages
