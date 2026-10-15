@@ -26,7 +26,7 @@
 ## 已知限制
 
 - Claude 雲端 session 的網路政策擋住四個來源網域（CONNECT 403），WebFetch 也一樣。要測外部來源：推一次性的 probe workflow（push 觸發），讀 GitHub Actions 日誌（`get_job_logs`；日誌大時會存成檔案，用 python 解碼）。Phase 0 就是這樣做的，結果在 `docs/data-sources.md`。
-- GolaVisa 有 Vercel 機器人檢查，不繞過。只有使用者電腦上的真人瀏覽器能讀；在那邊用 `/update-golavisa`（`.claude/commands/update-golavisa.md`）→ `scripts/publish-golavisa.ts` 推到 `data` 分支。`data` 分支沒有保護規則，只放 `golavisa.json` 與 `history.json`（排程每天寫入的歷史匯率），不要合進 `main`。
+- GolaVisa 有 Vercel 機器人檢查，不繞過。只有使用者電腦上的真人瀏覽器能讀；在那邊用 Claude 桌面 app 內建瀏覽器跑 `/update-golavisa`（`.claude/commands/update-golavisa.md`）→ `scripts/publish-golavisa.ts` 推到 `data` 分支。`data` 分支沒有保護規則，只放 `golavisa.json` 與 `history.json`（排程每天寫入的歷史匯率），不要合進 `main`。
 - Repo 設定（Pages Source、branch protection）Claude 無法操作，需使用者在 GitHub 網頁設定。
 - 資料存放決策：維持 git `data` 分支＋`raw.githubusercontent.com` 讀取，不改用資料庫（規模小、免金鑰、有變更紀錄）。已知代價：raw 有約 5 分鐘 CDN 快取；兩個寫入方（排程、使用者 Mac）推送衝突靠 rebase 重試；Mac 的 `gh` 憑證可寫整個 repo；公開 repo 60 天無活動時排程會被停用（歷史圖斷掉時先查 Actions）。改用 Cloudflare D1＋Worker 之類的時機：需要分鐘級資料、多人寫入、查詢或推播通知。
 
@@ -70,6 +70,7 @@
 
 每次 1–3 行；太長時把舊紀錄移到 `docs/` 下歸檔。
 
+- **2026-10-15**　使用者決定 `/update-golavisa` 改用 Claude 桌面 app 內建瀏覽器（`mcp__Claude_Browser__*`）讀 GolaVisa API，不再開 Chrome；沒有內建瀏覽器工具時才退回 Claude in Chrome。內建瀏覽器實測直接讀到 JSON，沒有 Security Checkpoint。桌面排程任務 `update-golavisa-daily` 的指示同步改掉。
 - **2026-10-13**　玉山沒更新：cron 改 08:23 後 GitHub 排程仍延遲（台北 13:26 還沒跑），不是程式錯誤。手動觸發一次補上。修正：`publish-golavisa.ts` 推完 `golavisa.json` 後用 `gh workflow run deploy.yml` 觸發部署（`--no-deploy` 可關），Mac 每天 08:00 任務一跑，玉山與當天歷史就跟著更新；GitHub 排程留作備援。
 - **2026-10-12**　桌面 app 的 `update-golavisa-daily` 任務已不在 app 排程清單（10/08 之後沒有自動跑）。使用者選擇沿用桌面 app 排程，重新建立並改成每天 08:00（實際約 08:14），早於 GitHub 08:23 的排程。需在 app 按一次「Run now」核准權限。
 - **2026-10-12**　排程延遲：cron `0 1 * * *`（台北 09:00）10/09–10/11 實際在 06:32–06:59 UTC 才跑，且會覆蓋當天早上手動跑的歷史。使用者決定兩個都改：cron 改 `23 0 * * *`（台北 08:23，避開整點）；排程觸發時 `record-history.ts --keep-existing`，當天已有紀錄就略過（手動觸發仍會覆蓋）。
