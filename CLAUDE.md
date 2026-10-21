@@ -70,6 +70,7 @@
 
 每次 1–3 行；太長時把舊紀錄移到 `docs/` 下歸檔。
 
+- **2026-10-21**　使用者決定桌面排程 `update-golavisa-daily` 改到每天 11:00（實際約 11:14），因為 GolaVisa 網站自己有時晚於 08:00 才更新。它推完後觸發的 Deploy 是手動觸發，會覆蓋當天歷史，所以每天的歷史點改成約 11:14 的玉山／BitoPro／Binance＋當天 GolaVisa；GitHub 08:23 排程仍是玉山的早上備援。
 - **2026-10-15**　使用者決定 `/update-golavisa` 改用 Claude 桌面 app 內建瀏覽器（`mcp__Claude_Browser__*`）讀 GolaVisa API，不再開 Chrome；沒有內建瀏覽器工具時才退回 Claude in Chrome。內建瀏覽器實測直接讀到 JSON，沒有 Security Checkpoint。桌面排程任務 `update-golavisa-daily` 的指示同步改掉。
 - **2026-10-13**　玉山沒更新：cron 改 08:23 後 GitHub 排程仍延遲（台北 13:26 還沒跑），不是程式錯誤。手動觸發一次補上。修正：`publish-golavisa.ts` 推完 `golavisa.json` 後用 `gh workflow run deploy.yml` 觸發部署（`--no-deploy` 可關），Mac 每天 08:00 任務一跑，玉山與當天歷史就跟著更新；GitHub 排程留作備援。
 - **2026-10-12**　桌面 app 的 `update-golavisa-daily` 任務已不在 app 排程清單（10/08 之後沒有自動跑）。使用者選擇沿用桌面 app 排程，重新建立並改成每天 08:00（實際約 08:14），早於 GitHub 08:23 的排程。需在 app 按一次「Run now」核准權限。
