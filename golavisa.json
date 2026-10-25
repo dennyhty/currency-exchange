@@ -1,17 +1,17 @@
 {
-  "fetchedAt": "2026-10-24T04:14:42.813Z",
+  "fetchedAt": "2026-10-25T05:24:13.181Z",
   "response": {
     "snapshot": {
       "rates": {
         "TWD": {
-          "sell": 809,
-          "buy_cash": 780,
-          "buy_transfer": 780
+          "sell": 799,
+          "buy_cash": 775,
+          "buy_transfer": 775
         },
         "USD": {
-          "sell": 26160,
-          "buy_cash": 25820,
-          "buy_transfer": 25820
+          "sell": 26130,
+          "buy_cash": 25850,
+          "buy_transfer": 25850
         }
       },
       "bank_rates": {
@@ -76,13 +76,13 @@
           "buy_transfer": 25640
         }
       },
-      "source": "vietcombank",
-      "source_url": "https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx",
+      "source": "telegram",
+      "source_url": null,
       "note": null,
-      "updated_at": "2026-10-24T03:41:00.562721+00:00",
-      "hung_long_updated_at": "2026-10-22T02:30:50.588965+00:00",
-      "bank_updated_at": "2026-10-24T03:41:00.562721+00:00",
-      "updated_by_name": "cron_vietcombank"
+      "updated_at": "2026-10-25T04:31:17.722104+00:00",
+      "hung_long_updated_at": "2026-10-25T04:31:17.722104+00:00",
+      "bank_updated_at": "2026-10-25T03:40:52.464161+00:00",
+      "updated_by_name": "Telegram: Leo Chen"
     },
     "shops": [
       {
