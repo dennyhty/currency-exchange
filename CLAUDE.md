@@ -28,7 +28,7 @@
 - Claude 雲端 session 的網路政策擋住四個來源網域（CONNECT 403），WebFetch 也一樣。要測外部來源：推一次性的 probe workflow（push 觸發），讀 GitHub Actions 日誌（`get_job_logs`；日誌大時會存成檔案，用 python 解碼）。Phase 0 就是這樣做的，結果在 `docs/data-sources.md`。
 - GolaVisa 有 Vercel 機器人檢查，不繞過。只有使用者電腦上的真人瀏覽器能讀；在那邊用 Claude 桌面 app 內建瀏覽器跑 `/update-golavisa`（`.claude/commands/update-golavisa.md`）→ `scripts/publish-golavisa.ts` 推到 `data` 分支。`data` 分支沒有保護規則，只放 `golavisa.json` 與 `history.json`（排程每天寫入的歷史匯率），不要合進 `main`。
 - Repo 設定（Pages Source、branch protection）Claude 無法操作，需使用者在 GitHub 網頁設定。
-- 資料存放決策：維持 git `data` 分支＋`raw.githubusercontent.com` 讀取，不改用資料庫（規模小、免金鑰、有變更紀錄）。已知代價：raw 有約 5 分鐘 CDN 快取；兩個寫入方（排程、使用者 Mac）推送衝突靠 rebase 重試；Mac 的 `gh` 憑證可寫整個 repo；公開 repo 60 天無活動時排程會被停用（歷史圖斷掉時先查 Actions）。改用 Cloudflare D1＋Worker 之類的時機：需要分鐘級資料、多人寫入、查詢或推播通知。
+- 資料存放決策：維持 git `data` 分支＋`raw.githubusercontent.com` 讀取，不改用資料庫（規模小、免金鑰、有變更紀錄）。已知代價：raw 有約 5 分鐘 CDN 快取；三個寫入方（GitHub 排程、使用者 Mac、Memoh VM 備援）推送衝突靠 rebase 重試；Mac 的 `gh` 憑證可寫整個 repo；公開 repo 60 天無活動時排程會被停用（歷史圖斷掉時先查 Actions）。改用 Cloudflare D1＋Worker 之類的時機：需要分鐘級資料、多人寫入、查詢或推播通知。
 
 ## 開發進度
 
@@ -70,6 +70,7 @@
 
 每次 1–3 行；太長時把舊紀錄移到 `docs/` 下歸檔。
 
+- **2026-11-02**　使用者在 Memoh 虛擬機加了 GolaVisa 備援，本機電腦睡眠或沒電時也能更新。Memoh 排程 `golavisa-backup-update` 每天台北 11:30 執行（Memoh 時區 UTC+7，cron `30 10 * * *`）：先看 `data` 分支 `golavisa.json` 的 `fetchedAt`，2 小時內已更新（本機 11:00 跑過）就跳過；否則用 Memoh 的 Chrome 讀 API（實測沒被 Vercel 擋），再跑 `scripts/publish-golavisa.ts`。VM 上的包裝腳本是 `/data/bin/gola-backup.sh`，`gh` 裝在 `/data/bin/gh`，repo 在 `/data/currency-exchange`。憑證是獨立的 fine-grained PAT（只限本 repo，Contents＋Actions 讀寫），放在 VM 的 `/data/.secrets/gh_token`，不進 repo；到期要重建。遇到 Security Checkpoint 會通知使用者，不繞過。
 - **2026-10-21**　使用者決定桌面排程 `update-golavisa-daily` 改到每天 11:00（實際約 11:14），因為 GolaVisa 網站自己有時晚於 08:00 才更新。它推完後觸發的 Deploy 是手動觸發，會覆蓋當天歷史，所以每天的歷史點改成約 11:14 的玉山／BitoPro／Binance＋當天 GolaVisa；GitHub 08:23 排程仍是玉山的早上備援。
 - **2026-10-15**　使用者決定 `/update-golavisa` 改用 Claude 桌面 app 內建瀏覽器（`mcp__Claude_Browser__*`）讀 GolaVisa API，不再開 Chrome；沒有內建瀏覽器工具時才退回 Claude in Chrome。內建瀏覽器實測直接讀到 JSON，沒有 Security Checkpoint。桌面排程任務 `update-golavisa-daily` 的指示同步改掉。
 - **2026-10-13**　玉山沒更新：cron 改 08:23 後 GitHub 排程仍延遲（台北 13:26 還沒跑），不是程式錯誤。手動觸發一次補上。修正：`publish-golavisa.ts` 推完 `golavisa.json` 後用 `gh workflow run deploy.yml` 觸發部署（`--no-deploy` 可關），Mac 每天 08:00 任務一跑，玉山與當天歷史就跟著更新；GitHub 排程留作備援。
