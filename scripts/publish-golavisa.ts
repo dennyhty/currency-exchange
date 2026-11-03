@@ -54,38 +54,77 @@ console.log(
     `site time ${g.updatedAt ? new Date(g.updatedAt).toISOString() : 'unknown'}`,
 );
 
-// 2. write it to the data branch in a throwaway clone (does not touch your working tree)
+// 2. write it to the data branch in a throwaway clone (does not touch your working tree).
+// Network trouble (e.g. DNS right after the Mac wakes up) is retried a few times. Only a remote that
+// answers and has no `data` branch counts as "create it": a failed fetch must never start a new branch.
 const remoteUrl = /[:/]/.test(values.remote)
   ? values.remote
   : git(process.cwd(), 'remote', 'get-url', values.remote);
-const work = mkdtempSync(join(tmpdir(), 'golavisa-'));
-try {
+const RETRY_DELAYS_S = [10, 30, 60];
+const sleep = (s: number): void => {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, s * 1000);
+};
+const firstLine = (e: unknown): string => {
+  const err = e as { stderr?: string; message?: string };
+  return (err.stderr || err.message || String(e)).trim().split('\n')[0] ?? '';
+};
+
+/** true if the remote has a `data` branch, false if it answered without one; throws if unreachable */
+const hasDataBranch = (): boolean => {
   try {
-    git(
-      work,
-      'clone',
-      '--quiet',
-      '--branch',
-      'data',
-      '--single-branch',
-      '--depth',
-      '1',
-      remoteUrl,
-      '.',
-    );
-  } catch {
-    console.log('no `data` branch yet: creating it');
-    git(work, 'init', '--quiet', '-b', 'data');
-    git(work, 'remote', 'add', 'origin', remoteUrl);
+    git(process.cwd(), 'ls-remote', '--exit-code', '--heads', remoteUrl, 'data');
+    return true;
+  } catch (e) {
+    if ((e as { status?: number }).status === 2) return false; // remote reachable, no such ref
+    throw e;
   }
-  writeFileSync(join(work, 'golavisa.json'), `${JSON.stringify(file, null, 2)}\n`);
-  git(work, 'add', 'golavisa.json');
-  git(work, 'commit', '--quiet', '-m', `data: GolaVisa rates ${file.fetchedAt}`);
-  git(work, 'push', '--quiet', 'origin', 'data');
-  console.log('published to the `data` branch. The site reads it within a few minutes.');
-} finally {
-  rmSync(work, { recursive: true, force: true });
+};
+
+const publishOnce = (): void => {
+  const work = mkdtempSync(join(tmpdir(), 'golavisa-'));
+  try {
+    if (hasDataBranch()) {
+      git(
+        work,
+        'clone',
+        '--quiet',
+        '--branch',
+        'data',
+        '--single-branch',
+        '--depth',
+        '1',
+        remoteUrl,
+        '.',
+      );
+    } else {
+      console.log('no `data` branch yet: creating it');
+      git(work, 'init', '--quiet', '-b', 'data');
+      git(work, 'remote', 'add', 'origin', remoteUrl);
+    }
+    writeFileSync(join(work, 'golavisa.json'), `${JSON.stringify(file, null, 2)}\n`);
+    git(work, 'add', 'golavisa.json');
+    git(work, 'commit', '--quiet', '-m', `data: GolaVisa rates ${file.fetchedAt}`);
+    git(work, 'push', '--quiet', 'origin', 'data'); // never forced: a stale or new branch is rejected
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
+};
+
+for (let attempt = 0; ; attempt++) {
+  try {
+    publishOnce();
+    break;
+  } catch (e) {
+    const delay = RETRY_DELAYS_S[attempt];
+    if (delay === undefined) {
+      console.error(`Not published: could not reach the \`data\` branch (${firstLine(e)}).`);
+      process.exit(1);
+    }
+    console.log(`publishing to \`data\` failed (${firstLine(e)}); retrying in ${delay}s`);
+    sleep(delay);
+  }
 }
+console.log('published to the `data` branch. The site reads it within a few minutes.');
 
 // 3. best effort: refresh the site now (E.SUN rates.json + today's history entry with these GolaVisa rates)
 if (!values['no-deploy']) {
