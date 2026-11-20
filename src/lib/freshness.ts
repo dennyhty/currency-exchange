@@ -5,6 +5,8 @@ export type Freshness = 'fresh' | 'warn' | 'stale';
 /** Age thresholds in ms: older than `warn` shows a warning, older than `stale` marks it stale. */
 export const THRESHOLDS: Record<SourceId, { warn: number; stale: number }> = {
   bitopro: { warn: 2 * 60_000, stale: 10 * 60_000 },
+  // read by the scheduled job (daily, plus the GolaVisa-triggered deploy): same cadence as E.SUN
+  max: { warn: 6 * 3_600_000, stale: 36 * 3_600_000 },
   binance: { warn: 2 * 60_000, stale: 10 * 60_000 },
   // refreshed once a day (09:00 Taipei): only call it stale after a missed run
   esun: { warn: 6 * 3_600_000, stale: 36 * 3_600_000 },

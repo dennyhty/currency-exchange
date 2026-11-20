@@ -131,3 +131,37 @@ describe('legs and shortfall', () => {
     expect(shortfall(100, 100)).toBe(0);
   });
 });
+
+describe('MAX backup', () => {
+  const max = { fetchedAt: 0, sourceUpdatedAt: null, ask: 33.151, bid: 33.15 };
+
+  it('takes over the USDT/TWD leg only when BitoPro is missing', () => {
+    const r = calcRoutes('TWD>VND', 30_000, { ...md, bitopro: undefined, max }).find(
+      (x) => x.id === 'usdt',
+    );
+    // 30,000 / 33.151 × 26,162 × (1 − 0.1%)
+    expect(r?.output).toBeCloseTo(23_651_628.61, 1);
+    expect(r?.legs.map((l) => l.source)).toEqual(['max', 'binance']);
+    expect(r?.legs[0]?.text).toContain('MAX 掛單簿 買 USDT：33.151');
+  });
+
+  it('sells at the MAX bid going back to TWD', () => {
+    const r = calcRoutes('VND>TWD', 10_000_000, { ...md, bitopro: undefined, max }).find(
+      (x) => x.id === 'usdt',
+    );
+    // 10,000,000 / 25,986 × (1 − 0.1%) × 33.15
+    expect(r?.output).toBeCloseTo(12_744.11, 1);
+  });
+
+  it('never replaces a BitoPro quote', () => {
+    const r = calcRoutes('TWD>VND', 30_000, { ...md, max }).find((x) => x.id === 'usdt');
+    expect(r?.legs[0]?.source).toBe('bitopro');
+  });
+
+  it('is still unavailable with neither', () => {
+    const r = calcRoutes('TWD>VND', 30_000, { ...md, bitopro: undefined }).find(
+      (x) => x.id === 'usdt',
+    );
+    expect(r).toMatchObject({ output: null, missing: ['BitoPro 報價'] });
+  });
+});

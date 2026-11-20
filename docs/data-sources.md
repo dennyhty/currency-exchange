@@ -7,7 +7,8 @@
 
 | 來源 | 取得方式 | GitHub runner 可連 | 瀏覽器直接呼叫（CORS） | 結論 |
 |---|---|---|---|---|
-| BitoPro | 官方公開 REST（GET） | ✅ | ✅ `*`，preflight 也通過 | 瀏覽器即時抓 |
+| BitoPro | 官方公開 REST（GET） | ✅（2026-11-20 起 ❌ 403） | ✅ `*`（2026-11-20 起 ❌ 403） | 瀏覽器即時抓；失敗時用 MAX 或前一天紀錄（§1a） |
+| MAX（備援） | 官方公開 REST（GET） | ✅ | ❌ 無 CORS 標頭；越南 IP 被 WAF 擋 | 排程快照（§1a） |
 | Binance Express 價格 | `agent/quote-price`（GET） | ✅ 不需瀏覽器 | ✅ `*` | 瀏覽器即時抓 |
 | Binance Express 費率 | `commission-rate/taker`（POST） | ✅ | ❌ 無 CORS 標頭 | 排程快照（很少變動） |
 | 玉山 即期匯率 | `LastRateInfo`（POST，空 body） | ✅ | ❌ 無 CORS 標頭 | 排程快照 |
@@ -22,6 +23,15 @@
 - 公開端點免登入，每 IP 600 次/分鐘（官方文件）。
 - 手續費（`/v3/provisioning/limitations-and-fees`，預設等級）：掛單 maker 0.1%、吃單 taker 0.2%；用 BITO 抵扣為 0.08%／0.16%。TWD、USDT 入金費 0。**USDT 提領網路費尚未取得。**
 - 待使用者確認：實際是用掛單簿還是「一鍵買賣」。
+
+## 1a. BitoPro 被擋與 MAX 備援（2026-11-20／21 實測）
+
+- 2026-11-20 起 `api.bitopro.com/v3` 所有公開端點都回 `403 Forbidden`（`server: awselb/2.0`），使用者在越南的 Mac 與 GitHub runner（美國 centralus）都一樣。
+- MAX：`GET https://max-api.maicoin.com/api/v3/depth?market=usdttwd&limit=1` → `{ timestamp（秒）, asks: [["33.151","2500.0"]], bids: [["33.15","49.96"]] }`，`[價格, 數量]` 字串。v2 同格式。範例在 `fixtures/max/`。
+  - GitHub runner：HTTP 200（Cloudflare），但回應**沒有** `Access-Control-Allow-Origin`，瀏覽器不能直接呼叫。
+  - 使用者 Mac（越南 IP）：Cloudflare WAF 擋下，回 `{"description":"waf block","country":"VN"}`。
+  - 所以 MAX 由排程抓：`scripts/fetch-snapshot.ts` 寫進 `rates.json` 的 `max`，`record-history.ts` 寫進 `history.json`。新鮮度門檻同玉山（6 小時警示／36 小時過期）。
+- 網站 USDT/TWD 這段的優先順序：BitoPro 即時 → MAX（`rates.json`）→ BitoPro 每日紀錄（7 天內）。MAX 只用掛單簿，不套 BitoPro 手續費設定。
 
 ## 2. 玉山銀行（USD/TWD 即期）
 

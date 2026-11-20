@@ -1,6 +1,6 @@
 export type Fiat = 'TWD' | 'CNY' | 'VND' | 'USD';
 export type Direction = 'TWD>VND' | 'VND>TWD' | 'CNY>VND' | 'VND>CNY';
-export type SourceId = 'bitopro' | 'binance' | 'esun' | 'gola';
+export type SourceId = 'bitopro' | 'max' | 'binance' | 'esun' | 'gola';
 
 /** Every fetched value carries when we got it and when the source says it was updated (epoch ms). */
 export interface Stamped {
@@ -15,6 +15,12 @@ export interface BitoproRates extends Stamped {
   /** One-click ("OTC") quotes, null when that endpoint failed. */
   otcBuy: number | null;
   otcSell: number | null;
+}
+
+/** MAX USDT/TWD order book, the backup for BitoPro. Same meaning of `ask`/`bid`. */
+export interface MaxRates extends Stamped {
+  ask: number;
+  bid: number;
 }
 
 /** USD/TWD spot board rate, TWD per USD. `bankBuy`: bank buys USD from you. `bankSell`: bank sells USD to you. */
@@ -59,10 +65,14 @@ export type Marked<T> = T & { stale?: boolean };
 export interface Snapshot {
   generatedAt: number;
   esun?: Marked<EsunRates>;
+  /** Read by the scheduled job only (no CORS, blocked from Vietnam). */
+  max?: Marked<MaxRates>;
 }
 
 export interface MarketData {
   bitopro?: BitoproRates;
+  /** Used for the USDT/TWD leg only when BitoPro is missing. */
+  max?: MaxRates;
   esun?: EsunRates;
   binance?: BinanceRates;
   binanceFees?: BinanceFees;

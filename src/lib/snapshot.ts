@@ -1,6 +1,6 @@
 import type { Snapshot } from './types.ts';
 
-export type SnapshotKey = 'esun';
+export type SnapshotKey = 'esun' | 'max';
 export type FetchResult<T> = { ok: true; value: T } | { ok: false; error: string };
 
 /**
@@ -9,14 +9,15 @@ export type FetchResult<T> = { ok: true; value: T } | { ok: false; error: string
  */
 export function mergeSnapshot(
   prev: Snapshot | null,
-  results: { [K in SnapshotKey]: FetchResult<NonNullable<Snapshot[K]>> },
+  /** A key left out counts as failed: its previous value is kept, flagged stale. */
+  results: { [K in SnapshotKey]?: FetchResult<NonNullable<Snapshot[K]>> },
   now: number,
 ): Snapshot {
   const next: Snapshot = { generatedAt: now };
-  const keys: SnapshotKey[] = ['esun'];
+  const keys: SnapshotKey[] = ['esun', 'max'];
   for (const key of keys) {
     const r = results[key];
-    if (r.ok) {
+    if (r?.ok) {
       Object.assign(next, { [key]: r.value });
     } else if (prev?.[key]) {
       Object.assign(next, { [key]: { ...prev[key], stale: true } });

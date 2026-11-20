@@ -1,11 +1,13 @@
-// Scheduled job (daily, 09:00 Taipei): fetch E.SUN's USD/TWD board rate, which a browser cannot read,
-// and write rates.json. If E.SUN fails, the previous value is kept and flagged stale.
+// Scheduled job (daily): fetch what a browser cannot read, E.SUN's USD/TWD board rate and MAX's
+// USDT/TWD order book (the BitoPro backup),
+// and write rates.json. If a source fails, the previous value is kept and flagged stale.
 // usage: node scripts/fetch-snapshot.ts --out public/rates.json [--prev previous-rates.json]
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { parseArgs } from 'node:util';
 import { asSnapshot, mergeSnapshot, type FetchResult } from '../src/lib/snapshot.ts';
 import { fetchEsun } from '../src/sources/esun.ts';
+import { fetchMax } from '../src/sources/max.ts';
 
 const { values } = parseArgs({ options: { out: { type: 'string' }, prev: { type: 'string' } } });
 if (!values.out) {
@@ -32,9 +34,15 @@ if (values.prev) {
   }
 }
 
-const esun = await attempt('esun', () => fetchEsun());
-const snapshot = mergeSnapshot(prev, { esun }, Date.now());
+const [esun, max] = await Promise.all([
+  attempt('esun', () => fetchEsun()),
+  attempt('max', () => fetchMax()),
+]);
+const snapshot = mergeSnapshot(prev, { esun, max }, Date.now());
 
 await mkdir(dirname(values.out), { recursive: true });
 await writeFile(values.out, `${JSON.stringify(snapshot, null, 2)}\n`);
-console.log(`wrote ${values.out}: esun=${esun.ok ? 'ok' : snapshot.esun ? 'stale' : 'missing'}`);
+const state = (ok: boolean, kept: unknown): string => (ok ? 'ok' : kept ? 'stale' : 'missing');
+console.log(
+  `wrote ${values.out}: esun=${state(esun.ok, snapshot.esun)} max=${state(max.ok, snapshot.max)}`,
+);

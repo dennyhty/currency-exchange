@@ -75,19 +75,31 @@ export function calcRoutes(
   const bitoSell = bito ? (otc ? bito.otcSell : bito.bid) : null; // TWD per USDT you get
   const bitoName = otc ? 'BitoPro 一鍵買賣' : 'BitoPro 掛單簿';
   const bf = settings.bitoproFee;
+  // MAX stands in for the whole USDT/TWD leg only when BitoPro gives nothing for it
+  const useMax = (bitoBuy === null || bitoSell === null) && md.max !== undefined;
   const bin = md.binance;
   const esun = md.esun;
   const gola = md.gola;
 
-  const bitoLeg = (side: 'buy' | 'sell'): Step => ({
-    rate: side === 'buy' ? bitoBuy : bitoSell,
+  const maxLeg = (side: 'buy' | 'sell'): Step => ({
+    rate: side === 'buy' ? md.max?.ask : md.max?.bid,
     op: side === 'buy' ? 'div' : 'mul',
-    fee: bf,
-    source: 'bitopro',
-    missing: 'BitoPro 報價',
-    text: (r) =>
-      `${bitoName} ${side === 'buy' ? '買' : '賣'} USDT：${fmt(r)} TWD${bf ? `（手續費 ${pct(bf)}）` : ''}`,
+    source: 'max',
+    missing: 'MAX 報價',
+    text: (r) => `MAX 掛單簿 ${side === 'buy' ? '買' : '賣'} USDT：${fmt(r)} TWD`,
   });
+  const bitoLeg = (side: 'buy' | 'sell'): Step =>
+    useMax
+      ? maxLeg(side)
+      : {
+          rate: side === 'buy' ? bitoBuy : bitoSell,
+          op: side === 'buy' ? 'div' : 'mul',
+          fee: bf,
+          source: 'bitopro',
+          missing: 'BitoPro 報價',
+          text: (r) =>
+            `${bitoName} ${side === 'buy' ? '買' : '賣'} USDT：${fmt(r)} TWD${bf ? `（手續費 ${pct(bf)}）` : ''}`,
+        };
   const binLeg = (fiat: 'VND' | 'CNY', side: 'buy' | 'sell'): Step => ({
     rate: bin?.[fiat][side],
     op: side === 'buy' ? 'div' : 'mul',
