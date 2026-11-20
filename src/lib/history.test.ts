@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  BITOPRO_FALLBACK_MAX_AGE,
   MAX_ENTRIES,
   appendEntry,
   entryMarketData,
   golaForHistory,
   hasEntry,
+  lastBitopro,
   historySeries,
   medianBinance,
   parseHistory,
@@ -167,5 +169,33 @@ describe('medianBinance', () => {
 
   it('is null without samples', () => {
     expect(medianBinance([])).toBeNull();
+  });
+});
+
+describe('lastBitopro', () => {
+  const now = Date.parse('2026-11-20T12:00:00Z');
+  it('returns the newest recorded BitoPro rates, stamped with the recording time', () => {
+    let f = appendEntry(null, entry('2026-11-18'));
+    f = appendEntry(
+      f,
+      entry('2026-11-19', { bitopro: { ask: 33, bid: 32.9, otcBuy: null, otcSell: null } }),
+    );
+    f = appendEntry(f, entry('2026-11-20', { bitopro: null }));
+    expect(lastBitopro(f, now)).toEqual({
+      fetchedAt: Date.parse('2026-11-19T01:00:00Z'),
+      sourceUpdatedAt: null,
+      ask: 33,
+      bid: 32.9,
+      otcBuy: null,
+      otcSell: null,
+    });
+  });
+  it('gives up on rates older than a week', () => {
+    const f = appendEntry(null, entry('2026-11-12'));
+    expect(lastBitopro(f, now)).toBeUndefined();
+    expect(lastBitopro(f, now - BITOPRO_FALLBACK_MAX_AGE + 24 * H)).toBeDefined();
+  });
+  it('handles no history', () => {
+    expect(lastBitopro(null, now)).toBeUndefined();
   });
 });
