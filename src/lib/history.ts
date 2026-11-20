@@ -1,7 +1,14 @@
 import { DEFAULT_SETTINGS, DIRECTIONS, calcRoutes } from '../calc/routes.ts';
 import { type FetchFn, RANGES, inRange, num, pick } from '../sources/util.ts';
 import { THRESHOLDS } from './freshness.ts';
-import type { Direction, FiatQuote, GolaRates, MarketData, Settings } from './types.ts';
+import type {
+  BitoproRates,
+  Direction,
+  FiatQuote,
+  GolaRates,
+  MarketData,
+  Settings,
+} from './types.ts';
 
 /**
  * Daily record of every source's rates, kept on the `data` branch as history.json. Written once a
@@ -175,6 +182,25 @@ export async function fetchHistory(fetchImpl: FetchFn = fetch): Promise<HistoryF
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`HTTP ${res.status} from raw.githubusercontent.com`);
   return parseHistory(await res.json());
+}
+
+/** How far back the site may reach for a BitoPro fallback before showing nothing at all. */
+export const BITOPRO_FALLBACK_MAX_AGE = 7 * 24 * 3_600_000;
+
+/**
+ * The newest BitoPro rates the daily job recorded, for when the live fetch fails (BitoPro has
+ * answered 403 to browsers and runners). `fetchedAt` is the recording time, so the site shows
+ * how old it is and marks it stale. Nothing older than BITOPRO_FALLBACK_MAX_AGE.
+ */
+export function lastBitopro(file: HistoryFile | null, now: number): BitoproRates | undefined {
+  const entries = file?.entries ?? [];
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const e = entries[i];
+    if (!e?.bitopro) continue;
+    if (now - e.at > BITOPRO_FALLBACK_MAX_AGE) return undefined;
+    return { fetchedAt: e.at, sourceUpdatedAt: null, ...e.bitopro };
+  }
+  return undefined;
 }
 
 // ---------- series for the chart ----------

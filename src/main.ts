@@ -7,7 +7,13 @@ import {
   type RouteResult,
 } from './calc/routes.ts';
 import { loadSnapshot } from './data.ts';
-import { fetchHistory, historySeries, taipeiDate, type HistoryFile } from './lib/history.ts';
+import {
+  fetchHistory,
+  historySeries,
+  lastBitopro,
+  taipeiDate,
+  type HistoryFile,
+} from './lib/history.ts';
 import { formatAge, formatTaipeiTime } from './lib/format.ts';
 import { freshness } from './lib/freshness.ts';
 import type {
@@ -60,15 +66,29 @@ const state: State = {
   now: Date.now(),
 };
 
-/** BitoPro and Binance come live from the browser; E.SUN comes from the daily snapshot. */
+/**
+ * BitoPro and Binance come live from the browser; E.SUN comes from the daily snapshot.
+ * When the live BitoPro fetch fails, fall back to the last recorded day (shown with its age).
+ */
 function marketData(): MarketData {
   const s = state.snapshot;
   return {
-    bitopro: state.liveBitopro,
+    bitopro: bitoproFallback() ?? state.liveBitopro,
     binance: state.liveBinance,
     esun: s?.esun,
     gola: state.remoteGola ?? undefined,
   };
+}
+
+/**
+ * Recorded history stands in only while the live fetch is failing, and only when it is newer
+ * than the last live quote this page got.
+ */
+function bitoproFallback(): BitoproRates | undefined {
+  if (!state.errors.bitopro) return undefined;
+  const h = lastBitopro(state.history, state.now);
+  const live = state.liveBitopro;
+  return h && (!live || h.fetchedAt > live.fetchedAt) ? h : undefined;
 }
 
 /** When the number was true: the source's own time if it gives one, else when we fetched it. */
@@ -162,7 +182,12 @@ function renderResults(container: HTMLElement): void {
 function renderStatus(container: HTMLElement): void {
   const md = marketData();
   const rows: Array<[SourceId, string]> = [
-    ['bitopro', md.bitopro ? `USDT 你買／你賣：${md.bitopro.ask}／${md.bitopro.bid} TWD` : '—'],
+    [
+      'bitopro',
+      md.bitopro
+        ? `USDT 你買／你賣：${md.bitopro.ask}／${md.bitopro.bid} TWD${bitoproFallback() ? '（即時抓取失敗，改用每日紀錄）' : ''}`
+        : '—',
+    ],
     [
       'binance',
       md.binance
