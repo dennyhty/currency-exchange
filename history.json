@@ -14,6 +14,7 @@
     "otcBuy": 32.16816,
     "otcSell": 31.894908
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25987,
@@ -45,6 +46,7 @@
     "otcBuy": 32.299684,
     "otcSell": 31.959648
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25987,
@@ -76,6 +78,7 @@
     "otcBuy": 32.277596,
     "otcSell": 31.94172
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25987,
@@ -107,6 +110,7 @@
     "otcBuy": 32.236432,
     "otcSell": 31.923792
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25982,
@@ -138,6 +142,7 @@
     "otcBuy": 32.24658043,
     "otcSell": 31.85208
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25995,
@@ -169,6 +174,7 @@
     "otcBuy": 32.227396,
     "otcSell": 31.95126446
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25980,
@@ -200,6 +206,7 @@
     "otcBuy": 32.316752,
     "otcSell": 32.03292013
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25920,
@@ -231,6 +238,7 @@
     "otcBuy": 32.562732,
     "otcSell": 32.263428
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25849,
@@ -262,6 +270,7 @@
     "otcBuy": 32.485424,
     "otcSell": 32.206656
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25764,
@@ -293,6 +302,7 @@
     "otcBuy": 32.603896,
     "otcSell": 32.328168
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25999,
@@ -324,6 +334,7 @@
     "otcBuy": 32.63,
     "otcSell": 32.35008
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 26050,
@@ -355,6 +366,7 @@
     "otcBuy": 32.63,
     "otcSell": 32.356056
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25948,
@@ -386,6 +398,7 @@
     "otcBuy": 32.623976,
     "otcSell": 32.33265617
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25972,
@@ -417,6 +430,7 @@
     "otcBuy": 32.56221514,
     "otcSell": 32.287332
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25964,
@@ -448,6 +462,7 @@
     "otcBuy": 32.777588,
     "otcSell": 32.500476
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25986,
@@ -479,6 +494,7 @@
     "otcBuy": 32.856904,
     "otcSell": 32.545296
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 26049,
@@ -510,6 +526,7 @@
     "otcBuy": 32.8559,
     "otcSell": 32.556252
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25995,
@@ -541,6 +558,7 @@
     "otcBuy": 32.965336,
     "otcSell": 32.660832
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 26280,
@@ -572,6 +590,7 @@
     "otcBuy": 32.95128,
     "otcSell": 32.571192
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 26200,
@@ -603,6 +622,7 @@
     "otcBuy": 32.697268,
     "otcSell": 32.423784
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25900,
@@ -634,6 +654,7 @@
     "otcBuy": 32.603896,
     "otcSell": 32.3202
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25950,
@@ -665,6 +686,7 @@
     "otcBuy": 32.714336,
     "otcSell": 32.43422785
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25996,
@@ -696,6 +718,7 @@
     "otcBuy": 32.87096,
     "otcSell": 32.5692
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 26000,
@@ -727,6 +750,7 @@
     "otcBuy": 32.95128,
     "otcSell": 32.610036
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25720,
@@ -758,6 +782,7 @@
     "otcBuy": 33.003488,
     "otcSell": 32.660832
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25676,
@@ -789,6 +814,7 @@
     "otcBuy": 32.797668,
     "otcSell": 32.511432
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25878,
@@ -820,6 +846,7 @@
     "otcBuy": 33.00004668,
     "otcSell": 32.681748
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25987,
@@ -851,6 +878,7 @@
     "otcBuy": 33.028588,
     "otcSell": 32.729556
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25950,
@@ -882,6 +910,7 @@
     "otcBuy": 33.05628193,
     "otcSell": 32.78334
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25850,
@@ -913,6 +942,7 @@
     "otcBuy": 33.095856,
     "otcSell": 32.821188
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25897,
@@ -944,6 +974,7 @@
     "otcBuy": 32.975376,
     "otcSell": 32.655852
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25846,
@@ -975,6 +1006,7 @@
     "otcBuy": 32.978388,
     "otcSell": 32.697684
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25800,
@@ -1006,6 +1038,7 @@
     "otcBuy": 32.989432,
     "otcSell": 32.716608
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25900,
@@ -1037,6 +1070,7 @@
     "otcBuy": 33.065736,
     "otcSell": 32.78972874
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25780,
@@ -1068,6 +1102,7 @@
     "otcBuy": 33.045656,
     "otcSell": 32.76782112
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25838,
@@ -1099,6 +1134,7 @@
     "otcBuy": 33.10046676,
     "otcSell": 32.81561956
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25780,
@@ -1130,6 +1166,7 @@
     "otcBuy": 33.060716,
     "otcSell": 32.78334
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 26007,
@@ -1161,6 +1198,7 @@
     "otcBuy": 33.165132,
     "otcSell": 32.85804
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25928,
@@ -1192,6 +1230,7 @@
     "otcBuy": 33.313724,
     "otcSell": 32.87184456
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 26030,
@@ -1223,6 +1262,7 @@
     "otcBuy": 33.198264,
     "otcSell": 32.9178
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25796,
@@ -1254,6 +1294,7 @@
     "otcBuy": 33.119952,
     "otcSell": 32.832144
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25800,
@@ -1285,6 +1326,7 @@
     "otcBuy": 33.099872,
     "otcSell": 32.817204
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25900,
@@ -1316,6 +1358,7 @@
     "otcBuy": 33.128988,
     "otcSell": 32.85445579
    },
+   "max": null,
    "binance": {
     "VND": {
      "buy": 25983,
@@ -1342,6 +1385,7 @@
     "bankSell": 33.05
    },
    "bitopro": null,
+   "max": null,
    "binance": {
     "VND": {
      "buy": 26238,
@@ -1350,6 +1394,36 @@
     "CNY": {
      "buy": 6.67,
      "sell": 6.68
+    }
+   },
+   "gola": {
+    "twdToVnd": 772,
+    "vndToTwd": 800,
+    "usdToVnd": 25770,
+    "vndToUsd": 26150,
+    "updatedAt": 1794797153964
+   }
+  },
+  {
+   "date": "2026-11-21",
+   "at": 1795232723829,
+   "esun": {
+    "bankBuy": 32.94,
+    "bankSell": 33.04
+   },
+   "bitopro": null,
+   "max": {
+    "ask": 33.169,
+    "bid": 33.168
+   },
+   "binance": {
+    "VND": {
+     "buy": 26474,
+     "sell": 26703
+    },
+    "CNY": {
+     "buy": 6.72,
+     "sell": 6.73
     }
    },
    "gola": {
