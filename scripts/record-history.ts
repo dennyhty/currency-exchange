@@ -21,6 +21,7 @@ import {
 } from '../src/lib/history.ts';
 import { fetchBinanceQuotes } from '../src/sources/binance.ts';
 import { fetchBitopro } from '../src/sources/bitopro.ts';
+import { fetchMax } from '../src/sources/max.ts';
 import { fetchEsun } from '../src/sources/esun.ts';
 import { parseGolaFile } from '../src/sources/golavisa.ts';
 
@@ -82,9 +83,10 @@ if (values['keep-existing'] && hasEntry(file, taipeiDate(at))) {
   console.log(`${taipeiDate(at)} is already recorded: keeping it`);
   process.exit(0);
 }
-const [esun, bitopro, binance] = await Promise.all([
+const [esun, bitopro, max, binance] = await Promise.all([
   attempt('esun', () => fetchEsun()),
   attempt('bitopro', () => fetchBitopro()),
+  attempt('max', () => fetchMax()),
   sampleBinance(),
 ]);
 const golaPath = values.gola;
@@ -93,7 +95,7 @@ const gola =
     ? await attempt('golavisa.json', async () => parseGolaFile(await readJson(golaPath)))
     : null;
 
-if (!esun && !bitopro && !binance) {
+if (!esun && !bitopro && !max && !binance) {
   console.error('every source failed: nothing recorded');
   process.exit(1);
 }
@@ -108,12 +110,13 @@ const entry: HistoryEntry = {
     otcBuy: bitopro.otcBuy,
     otcSell: bitopro.otcSell,
   },
+  max: max && { ask: max.ask, bid: max.bid },
   binance,
   gola: golaForHistory(gola, at),
 };
 const next = appendEntry(file, entry);
 await writeFile(values.file, `${JSON.stringify(next, null, 1)}\n`);
 console.log(
-  `recorded ${entry.date}: esun=${!!entry.esun} bitopro=${!!entry.bitopro} ` +
+  `recorded ${entry.date}: esun=${!!entry.esun} bitopro=${!!entry.bitopro} max=${!!entry.max} ` +
     `binance=${!!entry.binance} gola=${!!entry.gola} (${next.entries.length} days)`,
 );

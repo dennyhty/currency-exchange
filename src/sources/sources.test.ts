@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { fetchBinanceQuotes, parseQuote } from './binance.ts';
 import { fetchBitopro, parseOrderBook, parseOtc } from './bitopro.ts';
 import { fetchEsun, parseDotNetDate, parseEsun } from './esun.ts';
+import { MAX_DEPTH_URL, fetchMax, parseMaxDepth } from './max.ts';
 import { fakeFetch, fixture } from './fixtures.ts';
 import {
   buildGolaFile,
@@ -199,5 +200,33 @@ describe('golavisa published file', () => {
     expect(newerGola(manual, null)).toBe(manual);
     expect(newerGola(undefined, remote)).toBe(remote);
     expect(newerGola(undefined, null)).toBeUndefined();
+  });
+});
+
+describe('max', () => {
+  it('reads best ask/bid and the book time (seconds) from the depth response', () => {
+    expect(parseMaxDepth(fixture('max/depth-usdttwd.json'))).toEqual({
+      ask: 33.151,
+      bid: 33.15,
+      at: 1795218830_000,
+    });
+  });
+
+  it('rejects a crossed book, implausible prices and junk', () => {
+    expect(() => parseMaxDepth({ asks: [['33']], bids: [['34']] })).toThrow(/crossed/);
+    expect(() => parseMaxDepth({ asks: [['3315']], bids: [['3314']] })).toThrow(/outside/);
+    expect(() => parseMaxDepth({ waf: 'block' })).toThrow();
+  });
+
+  it('fetchMax stamps the result and fails on an HTTP error', async () => {
+    expect(MAX_DEPTH_URL).toContain('market=usdttwd');
+    const r = await fetchMax(fakeFetch([['max-api', fixture('max/depth-usdttwd.json')]]), 1000);
+    expect(r).toEqual({
+      fetchedAt: 1000,
+      sourceUpdatedAt: 1795218830_000,
+      ask: 33.151,
+      bid: 33.15,
+    });
+    await expect(fetchMax(fakeFetch([]))).rejects.toThrow(/HTTP 500/);
   });
 });

@@ -74,6 +74,7 @@ function marketData(): MarketData {
   const s = state.snapshot;
   return {
     bitopro: bitoproFallback() ?? state.liveBitopro,
+    max: s?.max,
     binance: state.liveBinance,
     esun: s?.esun,
     gola: state.remoteGola ?? undefined,
@@ -81,14 +82,16 @@ function marketData(): MarketData {
 }
 
 /**
- * Recorded history stands in only while the live fetch is failing, and only when it is newer
- * than the last live quote this page got.
+ * Recorded BitoPro history stands in only while the live fetch is failing, only when it is newer
+ * than the last live quote this page got, and only when MAX (the job's backup) is not newer still.
  */
 function bitoproFallback(): BitoproRates | undefined {
   if (!state.errors.bitopro) return undefined;
   const h = lastBitopro(state.history, state.now);
   const live = state.liveBitopro;
-  return h && (!live || h.fetchedAt > live.fetchedAt) ? h : undefined;
+  const max = state.snapshot?.max;
+  if (!h || (live && live.fetchedAt >= h.fetchedAt)) return undefined;
+  return max && max.fetchedAt >= h.fetchedAt ? undefined : h;
 }
 
 /** When the number was true: the source's own time if it gives one, else when we fetched it. */
@@ -96,6 +99,8 @@ function stampOf(md: MarketData, id: SourceId): number | null {
   switch (id) {
     case 'bitopro':
       return md.bitopro?.fetchedAt ?? null;
+    case 'max':
+      return md.max ? (md.max.sourceUpdatedAt ?? md.max.fetchedAt) : null;
     case 'binance':
       return md.binance?.fetchedAt ?? null;
     case 'esun':
@@ -107,6 +112,7 @@ function stampOf(md: MarketData, id: SourceId): number | null {
 
 const SOURCE_NAME: Record<SourceId, string> = {
   bitopro: 'BitoPro',
+  max: 'MAX（備援）',
   binance: 'Binance Express',
   esun: '玉山即期',
   gola: 'GolaVisa',
@@ -186,6 +192,12 @@ function renderStatus(container: HTMLElement): void {
       'bitopro',
       md.bitopro
         ? `USDT 你買／你賣：${md.bitopro.ask}／${md.bitopro.bid} TWD${bitoproFallback() ? '（即時抓取失敗，改用每日紀錄）' : ''}`
+        : '—',
+    ],
+    [
+      'max',
+      md.max
+        ? `USDT 你買／你賣：${md.max.ask}／${md.max.bid} TWD（BitoPro 沒資料時使用，每日由排程抓取）`
         : '—',
     ],
     [

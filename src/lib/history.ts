@@ -28,6 +28,8 @@ export interface HistoryEntry {
   at: number;
   esun: { bankBuy: number; bankSell: number } | null;
   bitopro: { ask: number; bid: number; otcBuy: number | null; otcSell: number | null } | null;
+  /** BitoPro backup; missing in entries before 2026-11-21. */
+  max?: { ask: number; bid: number } | null;
   binance: { VND: FiatQuote; CNY: FiatQuote } | null;
   /** Only when the published golavisa.json was fresh enough at `at`. */
   gola: Omit<GolaRates, 'enteredAt' | 'origin'> | null;
@@ -138,6 +140,14 @@ function parseEntry(v: unknown): HistoryEntry | null {
       otcSell: optional(pick(b, 'otcSell'), 'bitopro otc'),
     };
   });
+  const max = orNull(() => {
+    const m = pick(v, 'max');
+    if (m === null || m === undefined) return null;
+    return {
+      ask: inRange(num(pick(m, 'ask'), 'max'), tl, th, 'max'),
+      bid: inRange(num(pick(m, 'bid'), 'max'), tl, th, 'max'),
+    };
+  });
   const binance = orNull(() => {
     const b = pick(v, 'binance');
     if (b === null) return null;
@@ -160,7 +170,7 @@ function parseEntry(v: unknown): HistoryEntry | null {
       updatedAt: typeof updatedAt === 'number' && Number.isFinite(updatedAt) ? updatedAt : null,
     };
   });
-  return { date, at, esun, bitopro, binance, gola };
+  return { date, at, esun, bitopro, max, binance, gola };
 }
 
 /** Accepts the published file; malformed entries are dropped, malformed sources become null. */
@@ -210,6 +220,7 @@ export function entryMarketData(e: HistoryEntry): MarketData {
   return {
     esun: e.esun ? { ...stamp, ...e.esun } : undefined,
     bitopro: e.bitopro ? { ...stamp, ...e.bitopro } : undefined,
+    max: e.max ? { ...stamp, ...e.max } : undefined,
     binance: e.binance ? { ...stamp, ...e.binance } : undefined,
     gola: e.gola ? { ...e.gola, enteredAt: e.at, origin: 'remote' } : undefined,
   };

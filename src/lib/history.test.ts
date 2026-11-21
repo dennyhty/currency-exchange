@@ -22,6 +22,7 @@ const entry = (date: string, over: Partial<HistoryEntry> = {}): HistoryEntry => 
   at: Date.parse(`${date}T01:00:00Z`),
   esun: { bankBuy: 31.85, bankSell: 31.95 },
   bitopro: { ask: 32, bid: 31.9, otcBuy: 32.1, otcSell: 31.8 },
+  max: null,
   binance: { VND: { buy: 26_100, sell: 26_000 }, CNY: { buy: 6.65, sell: 6.67 } },
   gola: null,
   ...over,
@@ -197,5 +198,33 @@ describe('lastBitopro', () => {
   });
   it('handles no history', () => {
     expect(lastBitopro(null, now)).toBeUndefined();
+  });
+});
+
+describe('max in history', () => {
+  it('reads MAX, treats a missing field (older entries) as null, and rejects implausible values', () => {
+    const base = {
+      date: '2026-11-21',
+      at: 1,
+      esun: null,
+      bitopro: null,
+      binance: null,
+      gola: null,
+    };
+    const f = parseHistory({
+      version: 1,
+      entries: [
+        { ...base, date: '2026-11-19' },
+        { ...base, date: '2026-11-20', max: { ask: 3315, bid: 3314 } },
+        { ...base, max: { ask: 33.151, bid: 33.15 } },
+      ],
+    });
+    expect(f.entries.map((e) => e.max)).toEqual([null, null, { ask: 33.151, bid: 33.15 }]);
+    expect(entryMarketData(f.entries[2]!).max).toEqual({
+      fetchedAt: 1,
+      sourceUpdatedAt: null,
+      ask: 33.151,
+      bid: 33.15,
+    });
   });
 });

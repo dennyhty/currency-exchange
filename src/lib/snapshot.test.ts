@@ -34,6 +34,18 @@ describe('mergeSnapshot', () => {
   });
 });
 
+describe('mergeSnapshot with MAX', () => {
+  const max = { fetchedAt: 2, sourceUpdatedAt: 2, ask: 33.151, bid: 33.15 };
+  it('stores MAX next to E.SUN and keeps it stale when it fails', () => {
+    const first = mergeSnapshot(null, { esun: ok(esun(2)), max: ok(max) }, 9);
+    expect(first.max).toEqual(max);
+    expect(mergeSnapshot(first, { esun: ok(esun(3)), max: fail() }, 10).max).toEqual({
+      ...max,
+      stale: true,
+    });
+  });
+});
+
 describe('asSnapshot', () => {
   it('accepts a snapshot and rejects junk', () => {
     expect(asSnapshot({ generatedAt: 1 })).toEqual({ generatedAt: 1 });

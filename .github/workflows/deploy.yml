@@ -6,11 +6,13 @@ on:
   # Build the Pages artifact on PRs too, so a broken build is caught before merge.
   pull_request:
   workflow_dispatch:
-  # Refresh rates.json (E.SUN's USD/TWD board rate) once a day at 08:23 Taipei (00:23 UTC).
+  # Refresh rates.json (E.SUN, and MAX as the BitoPro backup) three times a day:
+  # 08:23, 14:23 and 20:23 Taipei (00:23, 06:23, 12:23 UTC). The GolaVisa task's deploy (~11:45) adds one more.
   # Off the hour on purpose: at 0 1 * * * GitHub started the runs 5.5-6 hours late (2026-10-09..11).
-  # Scheduled runs are still not guaranteed to be on time.
+  # Scheduled runs are still not guaranteed to be on time. History keeps one entry a day: a scheduled
+  # run only writes it when the day has none yet (--keep-existing), so the later runs leave it alone.
   schedule:
-    - cron: '23 0 * * *'
+    - cron: '23 0,6,12 * * *'
 
 permissions:
   contents: read
