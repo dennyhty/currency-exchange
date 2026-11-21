@@ -30,7 +30,7 @@
 - MAX：`GET https://max-api.maicoin.com/api/v3/depth?market=usdttwd&limit=1` → `{ timestamp（秒）, asks: [["33.151","2500.0"]], bids: [["33.15","49.96"]] }`，`[價格, 數量]` 字串。v2 同格式。範例在 `fixtures/max/`。
   - GitHub runner：HTTP 200（Cloudflare），但回應**沒有** `Access-Control-Allow-Origin`，瀏覽器不能直接呼叫。
   - 使用者 Mac（越南 IP）：Cloudflare WAF 擋下，回 `{"description":"waf block","country":"VN"}`。
-  - 所以 MAX 由排程抓：`scripts/fetch-snapshot.ts` 寫進 `rates.json` 的 `max`，`record-history.ts` 寫進 `history.json`。新鮮度門檻同玉山（6 小時警示／36 小時過期）。
+  - 所以 MAX 由排程抓：`scripts/fetch-snapshot.ts` 寫進 `rates.json` 的 `max`，`record-history.ts` 寫進 `history.json`。新鮮度門檻同玉山（6 小時警示／36 小時過期）。排程一天三次（台北 08:23、14:23、20:23，GitHub 常會延後），加上 GolaVisa 任務觸發的部署（約 11:45）。
 - 網站 USDT/TWD 這段的優先順序：BitoPro 即時 → MAX（`rates.json`）→ BitoPro 每日紀錄（7 天內）。MAX 只用掛單簿，不套 BitoPro 手續費設定。
 
 ## 2. 玉山銀行（USD/TWD 即期）
