@@ -1,5 +1,5 @@
 {
-  "fetchedAt": "2026-11-21T03:45:12.186Z",
+  "fetchedAt": "2026-11-22T03:44:42.800Z",
   "response": {
     "snapshot": {
       "rates": {
@@ -79,9 +79,9 @@
       "source": "vietcombank",
       "source_url": "https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx",
       "note": null,
-      "updated_at": "2026-11-21T03:00:38.998375+00:00",
+      "updated_at": "2026-11-22T03:00:40.717388+00:00",
       "hung_long_updated_at": "2026-11-16T02:45:53.964575+00:00",
-      "bank_updated_at": "2026-11-21T03:00:38.998375+00:00",
+      "bank_updated_at": "2026-11-22T03:00:40.717388+00:00",
       "updated_by_name": "cron_vietcombank"
     },
     "shops": [
