@@ -1526,32 +1526,32 @@
   },
   {
    "date": "2026-11-25",
-   "at": 1795559520159,
+   "at": 1795578298076,
    "esun": {
-    "bankBuy": 32.91,
-    "bankSell": 33.01
+    "bankBuy": 32.98,
+    "bankSell": 33.08
    },
    "bitopro": null,
    "max": {
-    "ask": 33.095,
-    "bid": 33.094
+    "ask": 33.04,
+    "bid": 33.039
    },
    "binance": {
     "VND": {
-     "buy": 26353,
-     "sell": 26475
+     "buy": 26384,
+     "sell": 26481
     },
     "CNY": {
      "buy": 6.68,
-     "sell": 6.7
+     "sell": 6.71
     }
    },
    "gola": {
-    "twdToVnd": 772,
-    "vndToTwd": 800,
-    "usdToVnd": 25770,
-    "vndToUsd": 26150,
-    "updatedAt": 1794797153964
+    "twdToVnd": 780,
+    "vndToTwd": 807,
+    "usdToVnd": 26070,
+    "vndToUsd": 26430,
+    "updatedAt": 1795578009302
    }
   }
  ]
