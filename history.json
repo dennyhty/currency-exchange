@@ -1618,6 +1618,41 @@
     "vndToUsd": 26400,
     "updatedAt": 1795747090428
    }
+  },
+  {
+   "date": "2026-11-28",
+   "at": 1795814656980,
+   "esun": {
+    "bankBuy": 32.91,
+    "bankSell": 33.01
+   },
+   "bitopro": {
+    "ask": 33.048,
+    "bid": 33.038,
+    "otcBuy": 33.1822,
+    "otcSell": 32.90286
+   },
+   "max": {
+    "ask": 33.051,
+    "bid": 33.05
+   },
+   "binance": {
+    "VND": {
+     "buy": 26387,
+     "sell": 26415
+    },
+    "CNY": {
+     "buy": 6.66,
+     "sell": 6.66
+    }
+   },
+   "gola": {
+    "twdToVnd": 777,
+    "vndToTwd": 806,
+    "usdToVnd": 25930,
+    "vndToUsd": 26400,
+    "updatedAt": 1795747090428
+   }
   }
  ]
 }
